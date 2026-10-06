@@ -117,7 +117,7 @@ public class GenreController {
     public ResponseEntity<?> deleteGenre(@Parameter(description = "Id of the genre", example = "1") @PathVariable Long id) {
         var genre = repository.findById(id);
         if (genre.isEmpty())
-            return ResponseEntity.notFound().build();
+            throw new GenreNotFoundException(id);
 
         // Album e o dono do Many-to-Many, entao o vinculo e removido pelo lado do album
         genre.get().getAlbums().forEach(album -> album.getGenres().remove(genre.get()));

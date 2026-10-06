@@ -118,7 +118,7 @@ public class RecordLabelController {
     public ResponseEntity<?> deleteLabel(@Parameter(description = "Id of the record label", example = "1") @PathVariable Long id) {
         var label = repository.findById(id);
         if (label.isEmpty())
-            return ResponseEntity.notFound().build();
+            throw new RecordLabelNotFoundException(id);
 
         if (!label.get().getAlbums().isEmpty())
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Record label still has albums");
