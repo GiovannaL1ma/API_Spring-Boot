@@ -125,7 +125,7 @@ public class CoverController {
     public ResponseEntity<?> deleteCover(@Parameter(description = "Id of the cover", example = "1") @PathVariable Long id) {
         var cover = repository.findById(id);
         if (cover.isEmpty())
-            return ResponseEntity.notFound().build();
+            throw new CoverNotFoundException(id);
 
         // Desfaz o One-to-One pelo lado do album antes de excluir
         cover.get().getAlbum().setCover(null);
@@ -155,7 +155,7 @@ public class CoverController {
 
         return repository.findByAlbumId(albumId)
                 .map(cover -> ResponseEntity.ok(assembler.toModel(cover)))
-                .orElse(ResponseEntity.notFound().build());
+                .orElseThrow(() -> new CoverNotFoundException("Album with ID: " + albumId + " has no cover"));
     }
 
     // Troca o album recebido (so com id) pela entidade do banco
