@@ -133,7 +133,7 @@ public class TrackController {
     public ResponseEntity<?> deleteTrack(@Parameter(description = "Id of the track", example = "1") @PathVariable Long id) {
         var track = repository.findById(id);
         if (track.isEmpty())
-            return ResponseEntity.notFound().build();
+            throw new TrackNotFoundException(id);
 
         // Track e o dono do Many-to-Many, entao as linhas de track_featured_artist saem junto
         repository.delete(track.get());
