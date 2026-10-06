@@ -1,0 +1,62 @@
+name: teste-temp
+on: push
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: api_restful_java-main
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Build e teste
+        run: sh mvnw -B package
+      - name: Sobe a API e chama os endpoints
+        run: |
+          java -jar target/MusicApi-0.0.1-SNAPSHOT.jar > app.log 2>&1 &
+          for i in $(seq 1 60); do curl -s localhost:8080/albums >/dev/null && break; sleep 2; done
+          fail=0
+          call() { # metodo url esperado [json]
+            if [ -n "$4" ]; then out=$(curl -s -o body.txt -w '%{http_code}' -X $1 -H 'Content-Type: application/json' -d "$4" localhost:8080$2)
+            else out=$(curl -s -o body.txt -w '%{http_code}' -X $1 localhost:8080$2); fi
+            if [ "$out" = "$3" ]; then r=OK; else r=FALHOU; fail=1; fi
+            echo "== $r  $1 $2  -> $out (esperado $3)"; head -c 700 body.txt; echo
+          }
+          call GET  / 200
+          call POST /labels 201 '{"name":"Parlophone","country":"United Kingdom","foundedYear":1896}'
+          call POST /labels 201 '{"name":"Columbia","country":"United States","foundedYear":1889}'
+          call POST /artists 201 '{"name":"The Beatles","country":"United Kingdom","startYear":1960,"type":"BAND"}'
+          call POST /artists 201 '{"name":"Daft Punk","country":"France","startYear":1993,"type":"DUO"}'
+          call POST /artists 201 '{"name":"Pharrell Williams","country":"United States","startYear":1992,"type":"SOLO"}'
+          call POST /artists 201 '{"name":"Nile Rodgers","country":"United States","startYear":1970,"type":"SOLO"}'
+          call POST /genres 201 '{"name":"Rock"}'
+          call POST /genres 201 '{"name":"Pop"}'
+          call POST /genres 201 '{"name":"Disco"}'
+          call POST /albums 201 '{"title":"Revolver","releaseYear":1966,"type":"STUDIO","label":{"id":1},"artists":[{"id":1}],"genres":[{"id":1},{"id":2}]}'
+          call POST /albums 201 '{"title":"Random Access Memories","releaseYear":2013,"type":"STUDIO","label":{"id":2},"artists":[{"id":2}],"genres":[{"id":2},{"id":3}]}'
+          call POST /tracks 201 '{"title":"Taxman","trackNumber":1,"durationSeconds":159,"album":{"id":1}}'
+          call POST /tracks 201 '{"title":"Get Lucky","trackNumber":8,"durationSeconds":369,"album":{"id":2},"featuredArtists":[{"id":3},{"id":4}]}'
+          call POST /covers 201 '{"designer":"Klaus Voormann","imageUrl":"https://example.com/covers/revolver.jpg","album":{"id":1}}'
+          call GET  /albums/1 200
+          call GET  /albums 200
+          call GET  /tracks/featuring/3 200
+          call GET  /artists/genre/2 200
+          call GET  "/albums/released?from=1960&to=1979" 200
+          call POST /albums 400 '{"title":"X","releaseYear":2000,"type":"STUDIO","artists":[]}'
+          call POST /covers 409 '{"designer":"Outro","imageUrl":"https://example.com/x.jpg","album":{"id":1}}'
+          call DELETE /labels/1 409
+          call GET  /albums/999 404
+          call DELETE /albums/999 404
+          call PUT  /genres/3 200 '{"name":"Disco","description":"Musica dancante dos anos 1970"}'
+          call DELETE /covers/1 204
+          call GET  /covers/album/1 404
+          call DELETE /albums/1 204
+          call GET  /tracks/1 404
+          call GET  "/artists?page=0&size=2" 200
+          call GET  /swagger-ui.html 200
+          call GET  /v3/api-docs 200
+          echo "---- log da aplicacao (erros) ----"; grep -E "ERROR|Exception" app.log | head -20
+          exit $fail
