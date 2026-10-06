@@ -137,7 +137,7 @@ public class AlbumController {
     public ResponseEntity<?> deleteAlbum(@Parameter(description = "Id of the album", example = "1") @PathVariable Long id) {
         var album = repository.findById(id);
         if (album.isEmpty())
-            return ResponseEntity.notFound().build();
+            throw new AlbumNotFoundException(id);
 
         // Album e o dono dos Many-to-Many (album_artist e album_genre); faixas e capa sao removidas em cascata
         repository.delete(album.get());
