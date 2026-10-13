@@ -14,7 +14,6 @@ import java.util.Map;
 @RestControllerAdvice
 public class ApiExceptionAdvice {
 
-    // 404 - recurso nao encontrado
     @ExceptionHandler({ArtistNotFoundException.class, AlbumNotFoundException.class, TrackNotFoundException.class,
             GenreNotFoundException.class, RecordLabelNotFoundException.class, CoverNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -22,7 +21,6 @@ public class ApiExceptionAdvice {
         return ex.getMessage();
     }
 
-    // 400 - payload nao passou nas validacoes (Bean Validation)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     Map<String, String> validationHandler(MethodArgumentNotValidException ex) {
@@ -32,14 +30,12 @@ public class ApiExceptionAdvice {
         return errors;
     }
 
-    // 400 - JSON mal formatado ou valor de enum invalido
     @ExceptionHandler(HttpMessageNotReadableException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     String unreadableHandler(HttpMessageNotReadableException ex) {
         return "Malformed request body";
     }
 
-    // 409 - violacao de unicidade (nome, numero da faixa no album, capa do album) ou exclusao de registro ainda referenciado
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     String conflictHandler(DataIntegrityViolationException ex) {

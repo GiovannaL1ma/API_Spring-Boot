@@ -7,65 +7,57 @@ import jakarta.validation.constraints.*;
 
 import java.util.*;
 
+// @Entity é para a classe virar uma entidade do banco, ai cada objeto Album vira uma linha da tabela "album" e cada atributo vira uma coluna. o hibernate faz esse "mapeamento" e a tabela é criada automaticamente (jpa) quando a aplicacao sobe
+// @Schema: so documentacao. O Swagger usa para
+// descrever o modelo e mostrar exemplos.
 @Entity
 @Schema(description = "Album (disco) lancado por um ou mais artistas")
 public class Album {
     private @Id
+    //generatedvalue serve para o banco gerar o id automaticamente
     @GeneratedValue(strategy = GenerationType.IDENTITY) long id;
-
-    @NotBlank
-    @Size(min = 1, max = 150)
+    // bean validatiom, se alguma falhar, a API responde 400 com a lista de erros (ver ApiExceptionAdvice) valor padrao.
+    @NotBlank                    
+    @Size(min = 1, max = 150)   
     @Schema(example = "Revolver")
     private String title;
-
-    @NotNull
-    @Min(1900)
-    @Max(2100)
+    @NotNull                     
+    @Min(1900)                 
+    @Max(2100)                 
     @Schema(description = "Ano de lancamento", example = "1966")
     private Integer releaseYear;
-
     @NotNull
-    @Enumerated(EnumType.STRING)
+    @Enumerated(EnumType.STRING)//grava no banco o TEXTO ("STUDIO") e nao a posicao (0, 1, 2...), assim o dado continua certo mesmo se a ordem do enum mudar.
     @Schema(example = "STUDIO")
     private AlbumType type;
 
-    // Many-to-One opcional: albuns independentes nao tem gravadora
-    // No payload basta enviar o id: "label": { "id": 1 }
+    // MANY-TO-ONE (lado "muitos" do One-to-Many Gravadora -> Album): muitos albuns podem ser da mesma gravadora.
     @ManyToOne
-    @JoinColumn(name = "label_id")
+    @JoinColumn(name = "label_id") //o join column serve para mudar o nome da coluna no banco (padrao seria "label_id" mesmo, mas poderia ser outro). A coluna é a FK (foreign key) que referencia a gravadora.
     private RecordLabel label;
-
-    // Many-to-Many: um album tem um ou mais artistas principais e um artista lanca varios albuns
-    // No payload basta enviar os ids: "artists": [{ "id": 1 }]
-    @NotEmpty
+    @NotEmpty // pelo menos 1 artista, senao 400
     @ManyToMany
-    @JoinTable(name = "album_artist",
-            joinColumns = @JoinColumn(name = "album_id"),
-            inverseJoinColumns = @JoinColumn(name = "artist_id"))
+    @JoinTable(name = "album_artist", joinColumns = @JoinColumn(name = "album_id"),inverseJoinColumns = @JoinColumn(name = "artist_id"))
+
     private Set<Artist> artists = new HashSet<>();
-
-    // Many-to-Many: um album pode ter varios generos e um genero reune varios albuns
-    // No payload basta enviar os ids: "genres": [{ "id": 1 }]
     @ManyToMany
-    @JoinTable(name = "album_genre",
-            joinColumns = @JoinColumn(name = "album_id"),
-            inverseJoinColumns = @JoinColumn(name = "genre_id"))
-    private Set<Genre> genres = new HashSet<>();
+    @JoinTable(name = "album_genre", joinColumns = @JoinColumn(name = "album_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
 
-    // One-to-Many: as faixas pertencem ao album e sao excluidas junto com ele
-    @JsonIgnore
-    @OneToMany(mappedBy = "album", cascade = CascadeType.REMOVE)
+    private Set<Genre> genres = new HashSet<>(); //set para nao ter repetidos, mesmo que o front envie 2x o mesmo genero.
+    @JsonIgnore // @JsonIgnore: nao aparece no JSON do album
+    @OneToMany(mappedBy = "album", cascade = CascadeType.REMOVE) //mappedBy diz que o dono do relacionamento e track.album
     @OrderBy("trackNumber")
-    private List<Track> tracks = new ArrayList<>();
 
-    // One-to-One: lado inverso, navegavel pelo link "cover"; a capa e excluida junto com o album
+    private List<Track> tracks = new ArrayList<>();
     @JsonIgnore
     @OneToOne(mappedBy = "album", cascade = CascadeType.REMOVE)
-    private Cover cover;
+    private Cover cover;// p nao aparecer o json
 
     public Album() {
+        //o construtor vazio existe para o Hibernate e o Jackson conseguirem criar um Album vazio e depois preencher sozinhos.
     }
 
+    // construtor de conveniencia, para criar um album ja preenchido no codigo
     public Album(String title, Integer releaseYear, AlbumType type, RecordLabel label) {
         this.title = title;
         this.releaseYear = releaseYear;
@@ -73,6 +65,9 @@ public class Album {
         this.label = label;
     }
 
+    
+    // O Jackson usa os getters para gerar o JSON de resposta e os setters para ler o JSON recebido.
+    // Campos com @JsonIgnore (tracks, cover) ficam fora do JSON mesmo tendo getter.
     public long getId() {
         return id;
     }
@@ -145,6 +140,11 @@ public class Album {
         this.cover = cover;
     }
 
+    // ---------- equals, hashCode e toString ----------
+
+    // equals: define quando dois objetos Album sao "iguais" (mesmo id e mesmos dados).
+    // E usado, por exemplo, pelos Sets dos relacionamentos para nao guardar repetidos.
+    // Os relacionamentos ficam de fora de proposito, para evitar loops entre entidades.
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -153,11 +153,13 @@ public class Album {
         return id == album.id && Objects.equals(title, album.title) && Objects.equals(releaseYear, album.releaseYear) && type == album.type;
     }
 
+    // hashCode são usados por sets e maps p organizar objetos. 
     @Override
     public int hashCode() {
         return Objects.hash(id, title, releaseYear, type);
     }
 
+    // toString: texto do objeto, util para logs e depuracao
     @Override
     public String toString() {
         return "Album{" +

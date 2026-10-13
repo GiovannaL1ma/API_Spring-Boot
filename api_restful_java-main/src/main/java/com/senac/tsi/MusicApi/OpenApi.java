@@ -16,8 +16,8 @@ public class OpenApi {
                 .info(new Info()
                         .title("Music Catalog API")
                         .version("1.0.0")
-                        .description("API RESTful para gerenciar um catalogo de discos: artistas, albuns, faixas, generos " +
-                                "e gravadoras, com albuns colaborativos, participacoes especiais (feat.) e rankings do catalogo. " +
+                        .description("API RESTful para gerenciar um catalogo de discos: artistas, albuns, faixas, generos, " +
+                                "gravadoras e capas, com albuns colaborativos e participacoes especiais (feat.). " +
                                 "Todas as listagens sao paginadas (page, size, sort) e as respostas seguem HATEOAS (HAL).")
                         .termsOfService("https://swagger.io/terms/")
                         .license(new License().name("MIT").url("https://mit-license.org/"))

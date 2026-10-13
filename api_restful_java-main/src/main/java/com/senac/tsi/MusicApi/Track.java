@@ -32,15 +32,11 @@ public class Track {
     @Schema(description = "Duracao em segundos", example = "212")
     private Integer durationSeconds;
 
-    // Many-to-One: um album tem varias faixas
-    // No payload basta enviar o id: "album": { "id": 1 }
     @NotNull
     @ManyToOne
     @JoinColumn(name = "album_id")
     private Album album;
 
-    // Many-to-Many: participacoes especiais (feat.) - um artista participa de varias faixas
-    // No payload basta enviar os ids: "featuredArtists": [{ "id": 1 }]
     @ManyToMany
     @JoinTable(name = "track_featured_artist",
             joinColumns = @JoinColumn(name = "track_id"),

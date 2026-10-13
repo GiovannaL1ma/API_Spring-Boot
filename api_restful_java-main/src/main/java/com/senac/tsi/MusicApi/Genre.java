@@ -26,7 +26,6 @@ public class Genre {
     @Schema(example = "Fusao de samba e jazz surgida no Rio de Janeiro no fim dos anos 1950")
     private String description;
 
-    // Many-to-Many: lado inverso, navegavel pelo link "albums"
     @JsonIgnore
     @ManyToMany(mappedBy = "genres")
     private Set<Album> albums = new HashSet<>();

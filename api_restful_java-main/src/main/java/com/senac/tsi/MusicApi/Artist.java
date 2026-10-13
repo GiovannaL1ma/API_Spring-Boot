@@ -37,12 +37,10 @@ public class Artist {
     @Schema(example = "SOLO")
     private ArtistType type;
 
-    // Many-to-Many: lado inverso, navegavel pelo link "albums"
     @JsonIgnore
     @ManyToMany(mappedBy = "artists")
     private Set<Album> albums = new HashSet<>();
 
-    // Many-to-Many: lado inverso das participacoes especiais, navegavel pelo link "featuredOn"
     @JsonIgnore
     @ManyToMany(mappedBy = "featuredArtists")
     private Set<Track> featuredOn = new HashSet<>();

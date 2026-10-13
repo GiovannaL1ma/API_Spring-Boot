@@ -31,7 +31,6 @@ public class RecordLabel {
     @Schema(description = "Ano de fundacao", example = "1896")
     private Integer foundedYear;
 
-    // One-to-Many: lado inverso, navegavel pelo link "albums"
     @JsonIgnore
     @OneToMany(mappedBy = "label")
     private List<Album> albums;

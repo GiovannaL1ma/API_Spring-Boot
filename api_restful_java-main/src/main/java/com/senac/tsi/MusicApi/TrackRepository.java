@@ -12,6 +12,5 @@ public interface TrackRepository extends JpaRepository<Track, Long> {
 
     Page<Track> findByAlbumId(long albumId, Pageable pageable);
 
-    // Many-to-Many: consulta pela tabela pivot track_featured_artist
     Page<Track> findByFeaturedArtistsId(long artistId, Pageable pageable);
 }

@@ -28,8 +28,6 @@ public class Cover {
     @Schema(description = "Endereco da imagem da capa", example = "https://example.com/covers/revolver.jpg")
     private String imageUrl;
 
-    // One-to-One: cada album tem uma unica capa (unique garante isso no banco)
-    // No payload basta enviar o id: "album": { "id": 1 }
     @NotNull
     @OneToOne
     @JoinColumn(name = "album_id", unique = true)

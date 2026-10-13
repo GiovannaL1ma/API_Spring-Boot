@@ -127,7 +127,6 @@ public class CoverController {
         if (cover.isEmpty())
             return ResponseEntity.notFound().build();
 
-        // Desfaz o One-to-One pelo lado do album antes de excluir
         cover.get().getAlbum().setCover(null);
         repository.delete(cover.get());
         return ResponseEntity.noContent().build();
@@ -158,7 +157,6 @@ public class CoverController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Troca o album recebido (so com id) pela entidade do banco
     private Album resolveAlbum(Album album) {
         return albumRepository.findById(album.getId())
                 .orElseThrow(() -> new AlbumNotFoundException(album.getId()));

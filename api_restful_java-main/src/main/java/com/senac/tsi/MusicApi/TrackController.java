@@ -135,7 +135,6 @@ public class TrackController {
         if (track.isEmpty())
             return ResponseEntity.notFound().build();
 
-        // Track e o dono do Many-to-Many, entao as linhas de track_featured_artist saem junto
         repository.delete(track.get());
         return ResponseEntity.noContent().build();
     }
@@ -178,7 +177,6 @@ public class TrackController {
         return ResponseEntity.ok(pagedResourcesAssembler.toModel(trackPage, assembler));
     }
 
-    // Trocam os objetos recebidos (so com id) pelas entidades do banco
     private Album resolveAlbum(Album album) {
         return albumRepository.findById(album.getId())
                 .orElseThrow(() -> new AlbumNotFoundException(album.getId()));

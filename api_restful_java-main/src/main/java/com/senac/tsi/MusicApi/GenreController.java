@@ -119,7 +119,6 @@ public class GenreController {
         if (genre.isEmpty())
             return ResponseEntity.notFound().build();
 
-        // Album e o dono do Many-to-Many, entao o vinculo e removido pelo lado do album
         genre.get().getAlbums().forEach(album -> album.getGenres().remove(genre.get()));
         repository.delete(genre.get());
         return ResponseEntity.noContent().build();

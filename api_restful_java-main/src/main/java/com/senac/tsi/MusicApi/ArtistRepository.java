@@ -14,8 +14,6 @@ public interface ArtistRepository extends JpaRepository<Artist, Long> {
 
     Page<Artist> findByType(ArtistType type, Pageable pageable);
 
-    // Atravessa os dois Many-to-Many (album_genre e album_artist): artistas que lancaram albuns do genero
-    // O artista e a raiz da consulta para que o sort/paginacao do cliente se aplique a ele
     @Query("select a from Artist a where exists " +
             "(select 1 from Album al join al.artists aa join al.genres g where aa = a and g.id = :genreId)")
     Page<Artist> findByGenreId(@Param("genreId") long genreId, Pageable pageable);

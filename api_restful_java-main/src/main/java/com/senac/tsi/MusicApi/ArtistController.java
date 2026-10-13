@@ -130,7 +130,6 @@ public class ArtistController {
         if (!artist.get().getAlbums().isEmpty())
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Artist still has albums");
 
-        // Track e o dono do Many-to-Many das participacoes, entao o vinculo e removido pelo lado da faixa
         artist.get().getFeaturedOn().forEach(track -> track.getFeaturedArtists().remove(artist.get()));
         repository.delete(artist.get());
         return ResponseEntity.noContent().build();
