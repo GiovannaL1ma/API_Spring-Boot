@@ -125,7 +125,7 @@ public class ArtistController {
     public ResponseEntity<?> deleteArtist(@Parameter(description = "Id of the artist", example = "1") @PathVariable Long id) {
         var artist = repository.findById(id);
         if (artist.isEmpty())
-            return ResponseEntity.notFound().build();
+            throw new ArtistNotFoundException(id);
 
         if (!artist.get().getAlbums().isEmpty())
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Artist still has albums");
