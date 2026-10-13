@@ -133,7 +133,7 @@ public class TrackController {
     public ResponseEntity<?> deleteTrack(@Parameter(description = "Id of the track", example = "1") @PathVariable Long id) {
         var track = repository.findById(id);
         if (track.isEmpty())
-            return ResponseEntity.notFound().build();
+            throw new TrackNotFoundException(id);
 
         repository.delete(track.get());
         return ResponseEntity.noContent().build();
