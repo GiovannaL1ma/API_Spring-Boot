@@ -13,6 +13,14 @@ O número completo segue o [Versionamento Semântico](https://semver.org/lang/pt
 - **MINOR** (`1.0.0` → `1.1.0`): acrescenta algo sem quebrar, como um endpoint novo. Continua na mesma rota (`/v1`).
 - **PATCH** (`1.1.0` → `1.1.1`): só corrige um erro, sem mudar o contrato.
 
+## [1.0.1] - 2026-11-02
+
+É uma versão PATCH: as rotas da API (`/v1/...`) e as respostas não mudaram.
+
+### Alterado
+
+- Os termos de serviço (`/terms.html`) passaram a citar pelo nome quem mantém a API e o nome completo do curso.
+
 ## [1.0.0] - 2026-11-02
 
 Primeira versão publicada. Todas as rotas começam com `/v1`: `/v1/artists`, `/v1/albums`, `/v1/tracks`, `/v1/covers`, `/v1/genres` e `/v1/labels`.

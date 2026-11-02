@@ -14,7 +14,7 @@ public class OpenApi {
 
     // versao da v1 em um lugar so: aparece no Swagger e na raiz (/); tem que bater com o <version> do pom.xml
     // MAJOR muda quando quebra quem ja usa a API (e ganha rota nova: /v2), MINOR quando acrescenta algo, PATCH quando so corrige
-    public static final String V1 = "1.0.0";
+    public static final String V1 = "1.0.1";
 
     @Bean
     public OpenAPI customOpenAPI() {
