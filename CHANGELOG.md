@@ -4,14 +4,39 @@ Todas as mudanças da Music Catalog API ficam registradas aqui, da mais nova par
 
 ## Como as versões funcionam
 
-A versão principal fica na URL: a v1 responde em `/v1/...` e uma v2 sairia em `/v2/...`, **com a v1 continuando no ar**.
-No Swagger, cada versão aparece no seletor "Select a definition", no topo da página.
+São dois números diferentes:
 
-O número completo segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/) (`MAJOR.MINOR.PATCH`) e aparece no Swagger e na raiz (`/`):
+- **Versão do produto** (`2.0.0`): muda a cada entrega, segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/) e aparece no Swagger e na raiz (`/`).
+  - **MAJOR** (`1.0.0` → `2.0.0`): a mudança quebra quem já usa a API, por exemplo uma rota que muda de endereço.
+  - **MINOR** (`2.0.0` → `2.1.0`): acrescenta algo sem quebrar, como um endpoint novo.
+  - **PATCH** (`2.1.0` → `2.1.1`): só corrige um erro, sem mudar o contrato.
+- **Versão de um endpoint** (header `X-API-Version`, valores `1` e `2`): quando o formato de um endpoint precisa mudar, a versão nova é criada **ao lado** da antiga, no mesmo endereço, e o cliente escolhe qual quer pelo header. Sem o header, a API responde a versão 1. No Swagger, cada versão aparece no seletor "Select a definition", no topo da página.
 
-- **MAJOR** (`1.0.0` → `2.0.0`): a mudança quebra quem já usa a API, por exemplo quando um JSON que era aceito passa a ser recusado. Ganha rota nova (`/v2`).
-- **MINOR** (`1.0.0` → `1.1.0`): acrescenta algo sem quebrar, como um endpoint novo. Continua na mesma rota (`/v1`).
-- **PATCH** (`1.1.0` → `1.1.1`): só corrige um erro, sem mudar o contrato.
+## [2.0.0] - 2026-11-02
+
+Entrega da fase 2. É uma versão MAJOR porque as rotas perderam o prefixo `/v1` (a versão passou para o header `X-API-Version`) e porque criar, alterar e excluir passou a exigir chave de API.
+
+### Mudanças incompatíveis
+
+- **Rotas sem `/v1`:** `/v1/artists` voltou a ser `/artists`, e assim por diante. A versão agora vai no header `X-API-Version`.
+- **Escrita exige chave:** `POST`, `PUT` e `DELETE` do catálogo respondem 401 sem uma chave válida no header `X-API-Key`. Ler continua livre.
+
+### Adicionado
+
+- **Chaves de API (`X-API-Key`):** `POST /api-keys` gera uma chave de nível USER; `GET` e `DELETE /api-keys/me` mostram e apagam a própria chave; `GET /api-keys`, `GET`, `PATCH` e `DELETE /api-keys/{id}` gerenciam todas as chaves e exigem nível ADMIN. A API guarda só o hash da chave. A chave ADMIN inicial vem da variável de ambiente `API_ADMIN_KEY`.
+- **Idempotência (`X-Idempotency-Key`):** em qualquer `POST`, repetir a mesma chave devolve a resposta da primeira vez (header `X-Idempotency-Replayed: true`) sem criar outro registro. A mesma chave com outra requisição responde 422, e uma requisição ainda em andamento responde 409. A chave vale por 24 horas.
+- **Limite de requisições:** 60 por minuto sem chave e 120 com chave, por cliente. Toda resposta traz `X-RateLimit-Limit`, `X-RateLimit-Remaining` e `X-RateLimit-Reset`; acima do limite, a resposta é 429 com `Retry-After`.
+- **Versão 2 das faixas (`X-API-Version: 2`):** `GET /tracks`, `GET /tracks/{id}` e `GET /tracks/album/{albumId}` trazem a duração formatada (`"duration": "2:39"`), o álbum resumido e os nomes dos convidados. A versão 1 continua igual.
+- **Validação de parâmetros:** `from` e `to` de `/albums/released` precisam estar entre 1900 e 2100.
+- **Erros novos com o motivo:** 401 (com `WWW-Authenticate`), 403, 405 (com `Allow`), 415, 422, 429, versão inexistente (400) e rota inexistente (404).
+- **Testes automatizados** dos recursos da fase 2 (`AdvancedFeaturesTests` e `RateLimitTests`).
+
+### Alterado
+
+- **CORS:** só as origens listadas em `api.cors.allowed-origins` podem chamar a API pelo navegador (antes era qualquer origem). Os headers da API (`X-API-Key`, `X-API-Version`, `X-Idempotency-Key`) foram liberados, e os de resposta (limite, versão, idempotência) ficam visíveis para o site.
+- **Camadas:** o código foi separado em pacotes (`controller`, `service`, `repository`, `model`, `dto`, `assembler`, `exception`, `config`, `web`), e as regras de negócio saíram dos controllers para os services.
+- **Swagger:** grupos por versão, botão Authorize para a chave, e cada endpoint documenta automaticamente os headers e os erros de chave, idempotência e limite.
+- **Termos de serviço:** explicam as chaves de API, o limite de requisições e o versionamento por header.
 
 ## [1.0.1] - 2026-11-02
 

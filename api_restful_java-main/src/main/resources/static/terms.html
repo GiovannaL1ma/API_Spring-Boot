@@ -55,9 +55,9 @@
     <p class="updated">Music Catalog API &middot; Última atualização: 2 de novembro de 2026</p>
 
     <div class="summary">
-        <p><strong>Resumo:</strong> a API é pública e gratuita, não tem login e guarda os dados só em memória.
-            Qualquer pessoa pode ver e alterar o que for cadastrado, e tudo é apagado quando o servidor reinicia.
-            Não cadastre dados pessoais nem use a API para guardar algo importante.</p>
+        <p><strong>Resumo:</strong> a API é gratuita e a leitura é livre. Para criar, alterar ou excluir dados é preciso uma
+            chave de API, que qualquer pessoa gera informando nome e e-mail. Os dados ficam só em memória e são apagados
+            quando o servidor reinicia. Não cadastre dados pessoais no catálogo nem use a API para guardar algo importante.</p>
     </div>
 
     <h2>1. Sobre a API</h2>
@@ -70,37 +70,51 @@
     <p>Você pode usar a API para estudar, testar e integrar com as suas aplicações. Não é permitido:</p>
     <ul>
         <li>enviar um volume de requisições que prejudique o serviço para os demais usuários (por exemplo, testes de carga ou scripts em laço);</li>
-        <li>tentar explorar falhas, acessar o servidor por outros meios ou contornar as regras da API;</li>
+        <li>tentar explorar falhas, acessar o servidor por outros meios ou contornar as regras da API, como o limite de requisições;</li>
         <li>cadastrar conteúdo ilegal, ofensivo ou que viole direitos de terceiros;</li>
-        <li>cadastrar dados pessoais de qualquer pessoa (CPF, telefone, endereço, e-mail etc.).</li>
+        <li>cadastrar dados pessoais de qualquer pessoa no catálogo (CPF, telefone, endereço, e-mail etc.).</li>
+    </ul>
+    <p>Cada cliente pode fazer até 60 requisições por minuto sem chave de API e 120 com chave. Acima disso a API responde
+        <code>429 Too Many Requests</code>, e o cabeçalho <code>Retry-After</code> informa em quantos segundos tentar de novo.</p>
+
+    <h2>3. Chaves de API</h2>
+    <ul>
+        <li><strong>Para que servem.</strong> Ler o catálogo é livre. Criar, alterar e excluir exige uma chave no cabeçalho
+            <code>X-API-Key</code>, gerada em <code>POST /api-keys</code>.</li>
+        <li><strong>O que é guardado.</strong> Para gerar a chave pedimos nome e e-mail, usados só para identificar quem é dono dela.
+            A chave em si não é guardada, só uma impressão digital dela (hash), por isso ela aparece uma única vez, na criação.</li>
+        <li><strong>Sua responsabilidade.</strong> Guarde a chave em segredo: quem tiver a chave age em seu nome. Você pode apagá-la a
+            qualquer momento com <code>DELETE /api-keys/me</code>, e o administrador pode desativar chaves usadas de forma indevida.</li>
     </ul>
 
-    <h2>3. Dados cadastrados</h2>
+    <h2>4. Dados cadastrados</h2>
     <ul>
-        <li><strong>São públicos.</strong> A API não tem autenticação: tudo o que for cadastrado pode ser lido, alterado ou excluído por qualquer pessoa que use a API.</li>
-        <li><strong>São temporários.</strong> Os dados ficam num banco em memória e são apagados sempre que o servidor reinicia. Não existe backup.</li>
+        <li><strong>São públicos.</strong> Tudo o que for cadastrado no catálogo pode ser lido por qualquer pessoa, e alterado ou
+            excluído por qualquer pessoa que tenha uma chave de API.</li>
+        <li><strong>São temporários.</strong> Os dados, inclusive as chaves de API, ficam num banco em memória e são apagados sempre
+            que o servidor reinicia. Não existe backup.</li>
         <li><strong>Imagens não são hospedadas.</strong> O campo <code>imageUrl</code> das capas guarda só o endereço da imagem. Use apenas links de imagens que você tem direito de divulgar.</li>
     </ul>
 
-    <h2>4. Disponibilidade</h2>
+    <h2>5. Disponibilidade e versões</h2>
     <p>A API é oferecida sem garantia de disponibilidade. Ela pode ficar fora do ar ou demorar para responder.</p>
-    <p>A versão faz parte da URL (ex.: <code>/v1/artists</code>). Mudanças que quebram a compatibilidade saem numa versão
-        nova (<code>/v2</code>), e a anterior continua no ar. Cada versão tem a sua documentação no
-        <a href="/swagger-ui.html">Swagger</a>.</p>
+    <p>A versão é escolhida pelo cabeçalho <code>X-API-Version</code> (sem ele, a API responde a versão 1). Mudanças que
+        quebram a compatibilidade saem numa versão nova, e a anterior continua disponível. Cada versão tem a sua
+        documentação no <a href="/swagger-ui.html">Swagger</a>.</p>
 
-    <h2>5. Isenção de garantias e de responsabilidade</h2>
+    <h2>6. Isenção de garantias e de responsabilidade</h2>
     <p>A API e o seu código são fornecidos &ldquo;no estado em que se encontram&rdquo;, sem garantias de qualquer tipo.
         Os mantenedores não se responsabilizam por perdas ou danos causados pelo uso da API ou pela falta dela.</p>
 
-    <h2>6. Licença do código</h2>
+    <h2>7. Licença do código</h2>
     <p>O código-fonte da API é distribuído sob a <a href="/license.txt">Licença MIT</a>. Estes termos tratam do uso do
         serviço publicado; a licença trata do uso, cópia e modificação do código.</p>
 
-    <h2>7. Alterações destes termos</h2>
+    <h2>8. Alterações destes termos</h2>
     <p>Estes termos podem ser atualizados a qualquer momento. A data da última atualização fica no topo desta página, e
         continuar usando a API depois de uma mudança significa aceitar a nova versão.</p>
 
-    <h2>8. Contato</h2>
+    <h2>9. Contato</h2>
     <p>Dúvidas sobre estes termos podem ser enviadas pelos canais do Senac São Paulo:
         <a href="https://www.sp.senac.br/">www.sp.senac.br</a>.</p>
 </main>
