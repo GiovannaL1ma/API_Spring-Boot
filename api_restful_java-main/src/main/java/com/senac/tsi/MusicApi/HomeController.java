@@ -31,6 +31,10 @@ public class HomeController {
         // Documentacao: Swagger UI e o JSON do OpenAPI
         model.add(linkTo(HomeController.class).slash("swagger-ui.html").withRel("docs"));
         model.add(linkTo(HomeController.class).slash("v3").slash("api-docs").withRel("openapi"));
+
+        // Termos de servico e licenca (arquivos em src/main/resources/static), os mesmos do topo do Swagger
+        model.add(linkTo(HomeController.class).slash("terms.html").withRel("terms-of-service"));
+        model.add(linkTo(HomeController.class).slash("license.txt").withRel("license"));
         return model;
     }
 
@@ -42,7 +46,7 @@ public class HomeController {
         }
 
         public String getVersion() {
-            return "1.0.0";
+            return OpenApi.V1;
         }
     }
 }

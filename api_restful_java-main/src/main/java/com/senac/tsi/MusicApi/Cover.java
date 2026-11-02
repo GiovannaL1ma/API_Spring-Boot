@@ -11,21 +11,25 @@ import java.util.Objects;
 @Schema(description = "Capa (arte grafica) de um album")
 public class Cover {
     private @Id
+    @Schema(description = "Gerado pelo banco: e ignorado se vier no corpo do POST ou do PUT", example = "1")
     @GeneratedValue(strategy = GenerationType.IDENTITY) long id;
 
     @NotBlank
     @Size(min = 2, max = 100)
-    @Schema(description = "Artista grafico, designer ou fotografo responsavel pela capa", example = "Klaus Voormann")
+    @Schema(description = "Artista grafico, designer ou fotografo responsavel pela capa: texto de 2 a 100 caracteres", example = "Klaus Voormann")
     private String designer;
 
     @Size(max = 255)
-    @Schema(example = "Colagem com desenhos a traco e fotografias dos quatro integrantes")
+    @Schema(description = "Texto livre opcional com no maximo 255 caracteres (o 255 e o tamanho do texto, nao um valor numerico)",
+            example = "Colagem com desenhos a traco e fotografias dos quatro integrantes")
     private String description;
 
+    // min = 1 so para o Swagger nao mostrar "minimo 0" num campo obrigatorio (o @NotBlank ja barra vazio)
     @NotBlank
     @URL
-    @Size(max = 255)
-    @Schema(description = "Endereco da imagem da capa", example = "https://example.com/covers/revolver.jpg")
+    @Size(min = 1, max = 255)
+    @Schema(description = "Endereco da imagem da capa: URL valida (ex.: https://...) com no maximo 255 caracteres",
+            example = "https://example.com/covers/revolver.jpg")
     private String imageUrl;
 
     @NotNull

@@ -13,23 +13,24 @@ import java.util.Set;
 @Schema(description = "Faixa (musica) de um album")
 public class Track {
     private @Id
+    @Schema(description = "Gerado pelo banco: e ignorado se vier no corpo do POST ou do PUT", example = "1")
     @GeneratedValue(strategy = GenerationType.IDENTITY) long id;
 
     @NotBlank
     @Size(min = 1, max = 150)
-    @Schema(example = "Águas de Março")
+    @Schema(description = "Titulo: texto de 1 a 150 caracteres", example = "Águas de Março")
     private String title;
 
     @NotNull
     @Min(1)
     @Max(99)
-    @Schema(description = "Posicao da faixa no album (unica por album)", example = "1")
+    @Schema(description = "Posicao da faixa no album: numero inteiro de 1 a 99, unico dentro do album", example = "1")
     private Integer trackNumber;
 
     @NotNull
     @Min(1)
     @Max(7200)
-    @Schema(description = "Duracao em segundos", example = "212")
+    @Schema(description = "Duracao em segundos: numero inteiro de 1 a 7200 (2 horas)", example = "212")
     private Integer durationSeconds;
 
     @NotNull

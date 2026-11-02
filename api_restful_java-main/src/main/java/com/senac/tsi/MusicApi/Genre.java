@@ -14,16 +14,19 @@ import java.util.Set;
 @Schema(description = "Genero musical")
 public class Genre {
     private @Id
+    @Schema(description = "Gerado pelo banco: e ignorado se vier no corpo do POST ou do PUT. " +
+            "Para apontar para um genero em outro recurso, mande so o id (ex.: \"genres\": [ { \"id\": 1 } ])", example = "1")
     @GeneratedValue(strategy = GenerationType.IDENTITY) long id;
 
     @NotBlank
     @Size(min = 2, max = 50)
     @Column(unique = true)
-    @Schema(example = "Bossa Nova")
+    @Schema(description = "Nome unico do genero: texto de 2 a 50 caracteres", example = "Bossa Nova")
     private String name;
 
     @Size(max = 255)
-    @Schema(example = "Fusao de samba e jazz surgida no Rio de Janeiro no fim dos anos 1950")
+    @Schema(description = "Texto livre opcional com no maximo 255 caracteres (o 255 e o tamanho do texto, nao um valor numerico)",
+            example = "Fusao de samba e jazz surgida no Rio de Janeiro no fim dos anos 1950")
     private String description;
 
     @JsonIgnore

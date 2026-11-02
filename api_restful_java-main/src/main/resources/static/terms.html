@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Termos de Serviço - Music Catalog API</title>
+    <style>
+        :root {
+            --bg: #fafaf9;
+            --text: #1c1917;
+            --muted: #57534e;
+            --line: #e7e5e4;
+            --accent: #9a3412;
+            --box: #f5f5f4;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1c1917;
+                --text: #f5f5f4;
+                --muted: #a8a29e;
+                --line: #44403c;
+                --accent: #fdba74;
+                --box: #292524;
+            }
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font: 16px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+        main { max-width: 720px; margin: 0 auto; padding: 48px 16px 64px; }
+        nav { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; margin-bottom: 40px; }
+        a { color: var(--accent); }
+        h1 { font-size: 32px; line-height: 1.2; margin: 0 0 8px; }
+        .updated { color: var(--muted); margin: 0 0 32px; }
+        .summary { background: var(--box); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; margin-bottom: 40px; }
+        .summary p { margin: 0; }
+        h2 { font-size: 20px; margin: 40px 0 8px; padding-top: 24px; border-top: 1px solid var(--line); }
+        ul { padding-left: 22px; }
+        li { margin: 6px 0; }
+        code { font-size: 14px; background: var(--box); padding: 1px 5px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<main>
+    <nav>
+        <a href="/swagger-ui.html">Documentação (Swagger)</a>
+        <a href="/">Raiz da API</a>
+        <a href="/license.txt">Licença MIT</a>
+    </nav>
+
+    <h1>Termos de Serviço</h1>
+    <p class="updated">Music Catalog API &middot; Última atualização: 2 de novembro de 2026</p>
+
+    <div class="summary">
+        <p><strong>Resumo:</strong> a API é pública e gratuita, não tem login e guarda os dados só em memória.
+            Qualquer pessoa pode ver e alterar o que for cadastrado, e tudo é apagado quando o servidor reinicia.
+            Não cadastre dados pessoais nem use a API para guardar algo importante.</p>
+    </div>
+
+    <h2>1. Sobre a API</h2>
+    <p>A Music Catalog API é uma API RESTful para cadastrar e consultar um catálogo de discos: artistas, álbuns,
+        faixas, capas, gêneros e gravadoras. Ela é desenvolvida e mantida por alunos do curso de TSI do Senac São Paulo.
+        Ao fazer qualquer requisição à API, inclusive pela documentação em <a href="/swagger-ui.html">/swagger-ui.html</a>,
+        você concorda com estes termos.</p>
+
+    <h2>2. Uso permitido</h2>
+    <p>Você pode usar a API para estudar, testar e integrar com as suas aplicações. Não é permitido:</p>
+    <ul>
+        <li>enviar um volume de requisições que prejudique o serviço para os demais usuários (por exemplo, testes de carga ou scripts em laço);</li>
+        <li>tentar explorar falhas, acessar o servidor por outros meios ou contornar as regras da API;</li>
+        <li>cadastrar conteúdo ilegal, ofensivo ou que viole direitos de terceiros;</li>
+        <li>cadastrar dados pessoais de qualquer pessoa (CPF, telefone, endereço, e-mail etc.).</li>
+    </ul>
+
+    <h2>3. Dados cadastrados</h2>
+    <ul>
+        <li><strong>São públicos.</strong> A API não tem autenticação: tudo o que for cadastrado pode ser lido, alterado ou excluído por qualquer pessoa que use a API.</li>
+        <li><strong>São temporários.</strong> Os dados ficam num banco em memória e são apagados sempre que o servidor reinicia. Não existe backup.</li>
+        <li><strong>Imagens não são hospedadas.</strong> O campo <code>imageUrl</code> das capas guarda só o endereço da imagem. Use apenas links de imagens que você tem direito de divulgar.</li>
+    </ul>
+
+    <h2>4. Disponibilidade</h2>
+    <p>A API é oferecida sem garantia de disponibilidade. Ela pode ficar fora do ar ou demorar para responder.</p>
+    <p>A versão faz parte da URL (ex.: <code>/v1/artists</code>). Mudanças que quebram a compatibilidade saem numa versão
+        nova (<code>/v2</code>), e a anterior continua no ar. Cada versão tem a sua documentação no
+        <a href="/swagger-ui.html">Swagger</a>.</p>
+
+    <h2>5. Isenção de garantias e de responsabilidade</h2>
+    <p>A API e o seu código são fornecidos &ldquo;no estado em que se encontram&rdquo;, sem garantias de qualquer tipo.
+        Os mantenedores não se responsabilizam por perdas ou danos causados pelo uso da API ou pela falta dela.</p>
+
+    <h2>6. Licença do código</h2>
+    <p>O código-fonte da API é distribuído sob a <a href="/license.txt">Licença MIT</a>. Estes termos tratam do uso do
+        serviço publicado; a licença trata do uso, cópia e modificação do código.</p>
+
+    <h2>7. Alterações destes termos</h2>
+    <p>Estes termos podem ser atualizados a qualquer momento. A data da última atualização fica no topo desta página, e
+        continuar usando a API depois de uma mudança significa aceitar a nova versão.</p>
+
+    <h2>8. Contato</h2>
+    <p>Dúvidas sobre estes termos podem ser enviadas pelos canais do Senac São Paulo:
+        <a href="https://www.sp.senac.br/">www.sp.senac.br</a>.</p>
+</main>
+</body>
+</html>

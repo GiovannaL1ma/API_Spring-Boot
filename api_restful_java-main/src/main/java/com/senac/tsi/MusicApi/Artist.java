@@ -13,23 +13,25 @@ import java.util.Set;
 @Schema(description = "Artista: solo, dupla, banda ou orquestra")
 public class Artist {
     private @Id
+    @Schema(description = "Gerado pelo banco: e ignorado se vier no corpo do POST ou do PUT. " +
+            "Para apontar para um artista em outro recurso, mande so o id (ex.: \"artists\": [ { \"id\": 1 } ])", example = "1")
     @GeneratedValue(strategy = GenerationType.IDENTITY) long id;
 
     @NotBlank
     @Size(min = 1, max = 100)
     @Column(unique = true)
-    @Schema(example = "Elis Regina")
+    @Schema(description = "Nome unico do artista: texto de 1 a 100 caracteres", example = "Elis Regina")
     private String name;
 
     @NotBlank
     @Size(min = 2, max = 60)
-    @Schema(description = "Pais de origem", example = "Brazil")
+    @Schema(description = "Pais de origem: texto de 2 a 60 caracteres", example = "Brazil")
     private String country;
 
     @NotNull
     @Min(1900)
     @Max(2100)
-    @Schema(description = "Ano de inicio da carreira", example = "1961")
+    @Schema(description = "Ano de inicio da carreira: numero inteiro de 1900 a 2100", example = "1961")
     private Integer startYear;
 
     @NotNull

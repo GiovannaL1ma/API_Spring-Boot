@@ -27,6 +27,7 @@ import java.util.Set;
 // @RestController: classe que responde requisicoes REST; o retorno dos metodos vira JSON.
 // @Tag: so documentacao; agrupa os endpoints no Swagger com um nome e uma descricao.
 @RestController
+@RequestMapping("/v1") // versao 1 da API: todas as rotas daqui comecam com /v1 (a v2 fica ao lado, em /v2)
 @Tag(name = "Albums", description = "Gerenciamento dos albuns (Many-to-Many com Artist e Genre, Many-to-One com RecordLabel, One-to-One com Cover)")
 public class AlbumController {
     // JSON de exemplo que aparece ja preenchido no Swagger (no POST e no PUT).
@@ -57,6 +58,8 @@ public class AlbumController {
 
     @Operation(summary = "Get all albums", description = "Lista paginada de todos os albuns, com seus artistas, generos e gravadora")
     @ApiResponse(responseCode = "200", description = "Returned a paginated list of albums")
+    @ApiResponse(responseCode = "400", description = "Invalid sort - o sort usa um campo que o album nao tem (ex.: sort=abc). Campos validos: id, title, releaseYear, type",
+            content = @Content(examples = @ExampleObject(value = "Invalid sort: Album has no field 'abc'")))
     @GetMapping("/albums")
     public ResponseEntity<PagedModel<EntityModel<Album>>> getAllAlbums(
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "id") Pageable pageable) {
@@ -67,8 +70,10 @@ public class AlbumController {
     @Operation(summary = "Get an album by its id", description = "Retorna um album com seus artistas, generos, gravadora e links para faixas e capa")
 
     @ApiResponse(responseCode = "200", description = "Returns a valid album",content = @Content(mediaType = "application/hal+json", schema = @Schema(implementation = Album.class)))
-    @ApiResponse(responseCode = "404", description = "Album not found", content = @Content)
-    @ApiResponse(responseCode = "400", description = "Invalid id", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Invalid id - o id precisa ser um numero inteiro (ex.: 1); textos como abc ou decimais como 1.5 sao recusados",
+            content = @Content(examples = @ExampleObject(value = "Invalid value 'abc' for parameter 'id': it must be a whole number")))
+    @ApiResponse(responseCode = "404", description = "Album not found - nao existe album com esse id (nunca foi criado ou ja foi excluido)",
+            content = @Content(examples = @ExampleObject(value = "Could not find album with ID: 99")))
     @GetMapping("/albums/{id}")
 
     public EntityModel<Album> getAlbumById(@Parameter(description = "Id of the album", example = "1") @PathVariable Long id) {
@@ -82,9 +87,21 @@ public class AlbumController {
 
     @ApiResponse(responseCode = "201", description = "Album created; Location header points to the new resource")
 
-    @ApiResponse(responseCode = "400", description = "Bad request on the payload (ex.: lista de artistas vazia, type fora de STUDIO, LIVE, COMPILATION, EP, SOUNDTRACK)", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Bad request on the payload - algum campo falhou na validacao (title vazio ou com mais de 150 caracteres, " +
+            "releaseYear fora de 1900 a 2100, lista artists vazia), o type nao e STUDIO, LIVE, COMPILATION, EP ou SOUNDTRACK, " +
+            "um campo veio com o tipo errado (ex.: numero num campo de texto, decimal ou texto num campo inteiro) ou o JSON esta mal formado. " +
+            "A resposta diz qual campo falhou e por que",
+            content = @Content(examples = {
+                    @ExampleObject(name = "Campo invalido", value = "{ \"title\": \"não deve estar em branco\", \"artists\": \"não deve estar vazio\" }"),
+                    @ExampleObject(name = "Type invalido", value = "Invalid value for field 'type'. Accepted values: [STUDIO, LIVE, COMPILATION, EP, SOUNDTRACK]"),
+                    @ExampleObject(name = "Tipo errado", value = "Invalid value for field 'releaseYear': expected Integer")}))
 
-    @ApiResponse(responseCode = "404", description = "A referenced artist, genre or label was not found", content = @Content)
+    @ApiResponse(responseCode = "404", description = "Artist, genre or label not found - algum id informado em artists, genres ou label nao existe; " +
+            "crie o registro antes ou corrija o id",
+            content = @Content(examples = {
+                    @ExampleObject(name = "Artista", value = "Could not find artist with ID: 99"),
+                    @ExampleObject(name = "Genero", value = "Could not find genre with ID: 99"),
+                    @ExampleObject(name = "Gravadora", value = "Could not find record label with ID: 99")}))
 
     @PostMapping("/albums")
     public ResponseEntity<EntityModel<Album>> newAlbum(
@@ -96,6 +113,8 @@ public class AlbumController {
                             examples = @ExampleObject(value = ALBUM_EXAMPLE)))
             @RequestBody @Valid Album newAlbum) {
 
+        // o id do album e gerado pelo banco; se vier no JSON e ignorado (senao o save sobrescreveria o album com esse id)
+        newAlbum.setId(0);
         // o JSON so traz os ids ({ "id": 1 }). Aqui trocamos esses objetos "vazios" pelas entidades reais do banco.
         newAlbum.setArtists(resolveArtists(newAlbum.getArtists()));//
         newAlbum.setGenres(resolveGenres(newAlbum.getGenres()));
@@ -110,9 +129,17 @@ public class AlbumController {
     @Operation(summary = "Updates an album", description = "Substitui todos os dados do album, inclusive as listas de artistas e generos")
     @ApiResponse(responseCode = "200", description = "Album updated", content = @Content(mediaType = "application/hal+json", schema = @Schema(implementation = Album.class)))
 
-    @ApiResponse(responseCode = "400", description = "Bad request on the payload", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Invalid id or payload - o id nao e um numero inteiro, ou algum campo do JSON e invalido (mesmas regras do POST)",
+            content = @Content(examples = {
+                    @ExampleObject(name = "Id invalido", value = "Invalid value 'abc' for parameter 'id': it must be a whole number"),
+                    @ExampleObject(name = "Campo invalido", value = "{ \"releaseYear\": \"deve ser menor que ou igual à 2100\" }"),
+                    @ExampleObject(name = "Type invalido", value = "Invalid value for field 'type'. Accepted values: [STUDIO, LIVE, COMPILATION, EP, SOUNDTRACK]")}))
 
-    @ApiResponse(responseCode = "404", description = "Album, artist, genre or label not found", content = @Content)
+    @ApiResponse(responseCode = "404", description = "Album, artist, genre or label not found - o album com esse id nao existe, " +
+            "ou algum id informado em artists, genres ou label nao existe",
+            content = @Content(examples = {
+                    @ExampleObject(name = "Album", value = "Could not find album with ID: 99"),
+                    @ExampleObject(name = "Artista", value = "Could not find artist with ID: 99")}))
 
     @PutMapping("/albums/{id}")
     public ResponseEntity<EntityModel<Album>> updateAlbum(
@@ -144,7 +171,10 @@ public class AlbumController {
     // Respostas: 204 No Content (sucesso, sem corpo) ou 404 se o id nao existir.
     @Operation(summary = "Deletes an album", description = "Exclui tambem as faixas, a capa e os vinculos do album com artistas e generos")
     @ApiResponse(responseCode = "204", description = "Successfully deleted an album", content = @Content)
-    @ApiResponse(responseCode = "404", description = "Album not found, maybe it's already deleted", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Invalid id - o id precisa ser um numero inteiro (ex.: 1)",
+            content = @Content(examples = @ExampleObject(value = "Invalid value 'abc' for parameter 'id': it must be a whole number")))
+    @ApiResponse(responseCode = "404", description = "Album not found, maybe it's already deleted - nao existe album com esse id",
+            content = @Content(examples = @ExampleObject(value = "Could not find album with ID: 99")))
     @Transactional
     @DeleteMapping("/albums/{id}")
     public ResponseEntity<?> deleteAlbum(@Parameter(description = "Id of the album", example = "1") @PathVariable Long id) {
@@ -160,6 +190,10 @@ public class AlbumController {
     // as consultas seguem o mesmo formato da listagem: recebem Pageable e devolvem PagedModel
     @Operation(summary = "Search albums by title", description = "Consulta personalizada: albuns cujo titulo contem o texto (sem diferenciar maiusculas)")
     @ApiResponse(responseCode = "200", description = "Returned a paginated list of albums")
+    @ApiResponse(responseCode = "400", description = "Missing title or invalid sort - o parametro title e obrigatorio, ou o sort usa um campo que o album nao tem (ex.: sort=abc)",
+            content = @Content(examples = {
+                    @ExampleObject(name = "Sem title", value = "Required parameter 'title' is missing"),
+                    @ExampleObject(name = "Sort invalido", value = "Invalid sort: Album has no field 'abc'")}))
     @GetMapping("/albums/search")
     public ResponseEntity<PagedModel<EntityModel<Album>>> getAlbumsByTitle(
             @Parameter(description = "Part of the album's title", example = "revolver") @RequestParam String title,
@@ -170,7 +204,11 @@ public class AlbumController {
 
     @Operation(summary = "Get albums by type", description = "Consulta personalizada: albuns filtrados pelo enum AlbumType (ex.: todos os discos ao vivo - LIVE)")
     @ApiResponse(responseCode = "200", description = "Returned a paginated list of albums")
-    @ApiResponse(responseCode = "400", description = "Invalid type", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Invalid type or sort - o type precisa ser exatamente STUDIO, LIVE, COMPILATION, EP ou SOUNDTRACK (em maiusculas), " +
+            "ou o sort usa um campo que o album nao tem",
+            content = @Content(examples = {
+                    @ExampleObject(name = "Type invalido", value = "Invalid value 'XYZ' for parameter 'type'. Accepted values: [STUDIO, LIVE, COMPILATION, EP, SOUNDTRACK]"),
+                    @ExampleObject(name = "Sort invalido", value = "Invalid sort: Album has no field 'abc'")}))
     @GetMapping("/albums/type/{type}")
     public ResponseEntity<PagedModel<EntityModel<Album>>> getAlbumsByType(
             @Parameter(description = "Type of the album", example = "STUDIO") @PathVariable AlbumType type,
@@ -182,14 +220,19 @@ public class AlbumController {
     // Se o periodo estiver invertido (from > to) responde 400 Bad Request.
     @Operation(summary = "Get albums released in a period", description = "Consulta personalizada: albuns lancados entre dois anos (inclusive), do mais antigo ao mais recente")
     @ApiResponse(responseCode = "200", description = "Returned a paginated list of albums")
-    @ApiResponse(responseCode = "400", description = "Start year is after end year", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Invalid period - from e maior que to (ex.: from=1980&to=1960), faltou from ou to, " +
+            "algum deles nao e um numero inteiro, ou o sort usa um campo que o album nao tem",
+            content = @Content(examples = {
+                    @ExampleObject(name = "Periodo invertido", value = "Invalid period: from (1980) must be less than or equal to to (1960)"),
+                    @ExampleObject(name = "Sem from", value = "Required parameter 'from' is missing"),
+                    @ExampleObject(name = "Ano nao numerico", value = "Invalid value 'abc' for parameter 'from': it must be a whole number")}))
     @GetMapping("/albums/released")
     public ResponseEntity<PagedModel<EntityModel<Album>>> getAlbumsReleasedBetween(
             @Parameter(description = "First year", example = "1960") @RequestParam int from,
             @Parameter(description = "Last year", example = "1979") @RequestParam int to,
             @ParameterObject @PageableDefault(size = 10, page = 0, sort = "releaseYear") Pageable pageable) {
         if (from > to)
-            return ResponseEntity.badRequest().build();
+            throw new InvalidSearchException("Invalid period: from (" + from + ") must be less than or equal to to (" + to + ")");
 
         Page<Album> albumPage = repository.findByReleaseYearBetween(from, to, pageable);
         return ResponseEntity.ok(pagedResourcesAssembler.toModel(albumPage, assembler));
@@ -198,7 +241,12 @@ public class AlbumController {
 
     @Operation(summary = "Get albums of an artist", description = "Consulta personalizada: discografia de um artista (Many-to-Many album_artist)")
     @ApiResponse(responseCode = "200", description = "Returned a paginated list of albums of the artist")
-    @ApiResponse(responseCode = "404", description = "Artist not found", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Invalid artistId or sort - o artistId precisa ser um numero inteiro, ou o sort usa um campo que o album nao tem",
+            content = @Content(examples = {
+                    @ExampleObject(name = "Id invalido", value = "Invalid value 'abc' for parameter 'artistId': it must be a whole number"),
+                    @ExampleObject(name = "Sort invalido", value = "Invalid sort: Album has no field 'abc'")}))
+    @ApiResponse(responseCode = "404", description = "Artist not found - nao existe artista com esse id",
+            content = @Content(examples = @ExampleObject(value = "Could not find artist with ID: 99")))
     @GetMapping("/albums/artist/{artistId}")
     public ResponseEntity<PagedModel<EntityModel<Album>>> getAlbumsByArtist(
             @Parameter(description = "Id of the artist", example = "1") @PathVariable Long artistId,
@@ -212,7 +260,12 @@ public class AlbumController {
 
     @Operation(summary = "Get albums of a genre", description = "Consulta personalizada: albuns classificados no genero (Many-to-Many album_genre)")
     @ApiResponse(responseCode = "200", description = "Returned a paginated list of albums of the genre")
-    @ApiResponse(responseCode = "404", description = "Genre not found", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Invalid genreId or sort - o genreId precisa ser um numero inteiro, ou o sort usa um campo que o album nao tem",
+            content = @Content(examples = {
+                    @ExampleObject(name = "Id invalido", value = "Invalid value 'abc' for parameter 'genreId': it must be a whole number"),
+                    @ExampleObject(name = "Sort invalido", value = "Invalid sort: Album has no field 'abc'")}))
+    @ApiResponse(responseCode = "404", description = "Genre not found - nao existe genero com esse id",
+            content = @Content(examples = @ExampleObject(value = "Could not find genre with ID: 99")))
     @GetMapping("/albums/genre/{genreId}")
     public ResponseEntity<PagedModel<EntityModel<Album>>> getAlbumsByGenre(
             @Parameter(description = "Id of the genre", example = "1") @PathVariable Long genreId,
@@ -226,7 +279,12 @@ public class AlbumController {
 
     @Operation(summary = "Get albums of a record label", description = "Consulta personalizada: catalogo de uma gravadora (One-to-Many)")
     @ApiResponse(responseCode = "200", description = "Returned a paginated list of albums of the label")
-    @ApiResponse(responseCode = "404", description = "Record label not found", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Invalid labelId or sort - o labelId precisa ser um numero inteiro, ou o sort usa um campo que o album nao tem",
+            content = @Content(examples = {
+                    @ExampleObject(name = "Id invalido", value = "Invalid value 'abc' for parameter 'labelId': it must be a whole number"),
+                    @ExampleObject(name = "Sort invalido", value = "Invalid sort: Album has no field 'abc'")}))
+    @ApiResponse(responseCode = "404", description = "Record label not found - nao existe gravadora com esse id",
+            content = @Content(examples = @ExampleObject(value = "Could not find record label with ID: 99")))
     @GetMapping("/albums/label/{labelId}")
     public ResponseEntity<PagedModel<EntityModel<Album>>> getAlbumsByLabel(
             @Parameter(description = "Id of the record label", example = "1") @PathVariable Long labelId,

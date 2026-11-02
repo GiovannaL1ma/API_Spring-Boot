@@ -15,16 +15,18 @@ import java.util.*;
 public class Album {
     private @Id
     //generatedvalue serve para o banco gerar o id automaticamente
+    @Schema(description = "Gerado pelo banco: e ignorado se vier no corpo do POST ou do PUT. " +
+            "Para apontar para um album em outro recurso, mande so o id (ex.: \"album\": { \"id\": 1 })", example = "1")
     @GeneratedValue(strategy = GenerationType.IDENTITY) long id;
     // bean validatiom, se alguma falhar, a API responde 400 com a lista de erros (ver ApiExceptionAdvice) valor padrao.
     @NotBlank                    
     @Size(min = 1, max = 150)   
-    @Schema(example = "Revolver")
+    @Schema(description = "Titulo: texto de 1 a 150 caracteres", example = "Revolver")
     private String title;
     @NotNull                     
     @Min(1900)                 
     @Max(2100)                 
-    @Schema(description = "Ano de lancamento", example = "1966")
+    @Schema(description = "Ano de lancamento: numero inteiro de 1900 a 2100", example = "1966")
     private Integer releaseYear;
     @NotNull
     @Enumerated(EnumType.STRING)//grava no banco o TEXTO ("STUDIO") e nao a posicao (0, 1, 2...), assim o dado continua certo mesmo se a ordem do enum mudar.

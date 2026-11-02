@@ -12,23 +12,25 @@ import java.util.Objects;
 @Schema(description = "Gravadora responsavel pelo lancamento dos albuns")
 public class RecordLabel {
     private @Id
+    @Schema(description = "Gerado pelo banco: e ignorado se vier no corpo do POST ou do PUT. " +
+            "Para apontar para uma gravadora em outro recurso, mande so o id (ex.: \"label\": { \"id\": 1 })", example = "1")
     @GeneratedValue(strategy = GenerationType.IDENTITY) long id;
 
     @NotBlank
     @Size(min = 2, max = 100)
     @Column(unique = true)
-    @Schema(example = "Parlophone")
+    @Schema(description = "Nome unico da gravadora: texto de 2 a 100 caracteres", example = "Parlophone")
     private String name;
 
     @NotBlank
     @Size(min = 2, max = 60)
-    @Schema(example = "United Kingdom")
+    @Schema(description = "Pais da gravadora: texto de 2 a 60 caracteres", example = "United Kingdom")
     private String country;
 
     @NotNull
     @Min(1850)
     @Max(2100)
-    @Schema(description = "Ano de fundacao", example = "1896")
+    @Schema(description = "Ano de fundacao: numero inteiro de 1850 a 2100", example = "1896")
     private Integer foundedYear;
 
     @JsonIgnore

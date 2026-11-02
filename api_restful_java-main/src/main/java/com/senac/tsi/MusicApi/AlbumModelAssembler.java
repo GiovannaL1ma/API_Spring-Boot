@@ -16,7 +16,7 @@ class AlbumModelAssembler implements RepresentationModelAssembler<Album, EntityM
         // withSelfRel() cria o link "self"; withRel("nome") cria um link com esse nome.
         EntityModel<Album> model = EntityModel.of(album,
                 linkTo(methodOn(AlbumController.class).getAlbumById(album.getId())).withSelfRel(),          // o proprio album
-                linkTo(methodOn(AlbumController.class).updateAlbum(album.getId(), null)).withRel("update"), // PUT /albums/{id}
+                linkTo(methodOn(AlbumController.class).updateAlbum(album.getId(), null)).withRel("update"), // PUT /v1/albums/{id}
                 linkTo(methodOn(AlbumController.class).deleteAlbum(album.getId())).withRel("delete"),       // DELETE /albums/{id}
                 linkTo(methodOn(TrackController.class).getTracksByAlbum(album.getId(), Pageable.unpaged())).withRel("tracks"), // faixas (1:N)
                 linkTo(methodOn(CoverController.class).getCoverByAlbum(album.getId())).withRel("cover"),    // capa (1:1)
