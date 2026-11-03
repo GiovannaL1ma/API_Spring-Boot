@@ -74,7 +74,7 @@ Os testes sobem a API inteira e conferem a chave de API, a idempotência, as dua
 
 ### Coleção do Postman
 
-A pasta [`postman/`](postman/) tem a coleção com todos os endpoints, organizada na ordem de uso: gerar a chave, cadastrar (gravadora, gênero, artista, álbum, faixa, capa), consultar e, depois, demonstrar paginação, versionamento, idempotência, chave de API, limite de requisições, CORS e erros. A última pasta apaga o que foi criado, para a coleção poder rodar de novo.
+A pasta [`postman/`](postman/) tem a coleção com todos os endpoints, organizada na ordem de uso: gerar a chave, cadastrar (gravadora, gênero, artista, álbum, faixa, capa), consultar e, depois, demonstrar paginação, versionamento, idempotência, chave de API, limite de requisições, CORS e erros. A última pasta apaga o que foi criado, e os nomes cadastrados levam um número diferente a cada rodada (ex.: `The Beatles 482913`), então a coleção pode rodar de novo mesmo que uma rodada anterior tenha parado no meio.
 
 1. No Postman, clique em **Import** e escolha `postman/Music-Catalog-API.postman_collection.json`.
 2. Na aba **Variables** da coleção, confira o `baseUrl` (`http://localhost:8080` ou o endereço do Render) e troque o valor do `adminKey` (`cole-aqui-a-chave-admin`) pela chave ADMIN.

@@ -82,15 +82,26 @@
           "response": [],
           "event": [
             {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"runId\", String(Date.now()).slice(-6)); // sufixo dos nomes desta rodada"
+                ]
+              }
+            },
+            {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
-                  "const body = pm.response.json();",
-                  "pm.test(\"devolve a chave completa\", () => pm.expect(body.apiKey).to.exist);",
-                  "pm.collectionVariables.set(\"apiKey\", body.apiKey);",
-                  "pm.collectionVariables.set(\"keyId\", body.id);"
+                  "if (pm.response.code === 201) {",
+                  "    const body = pm.response.json();",
+                  "    pm.test(\"devolve a chave completa\", () => pm.expect(body.apiKey).to.exist);",
+                  "    pm.collectionVariables.set(\"apiKey\", body.apiKey);",
+                  "    pm.collectionVariables.set(\"keyId\", body.id);",
+                  "}"
                 ]
               }
             }
@@ -165,7 +176,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Apple Records\",\n  \"country\": \"United Kingdom\",\n  \"foundedYear\": 1968\n}",
+              "raw": "{\n  \"name\": \"Apple Records {{runId}}\",\n  \"country\": \"United Kingdom\",\n  \"foundedYear\": 1968\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -184,7 +195,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"labelId\", pm.response.json().id);"
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"labelId\", pm.response.json().id);"
                 ]
               }
             }
@@ -290,7 +301,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Apple Records\",\n  \"country\": \"England\",\n  \"foundedYear\": 1968\n}",
+              "raw": "{\n  \"name\": \"Apple Records {{runId}}\",\n  \"country\": \"England\",\n  \"foundedYear\": 1968\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -346,7 +357,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Rock\",\n  \"description\": \"Musica baseada em guitarra eletrica, baixo e bateria\"\n}",
+              "raw": "{\n  \"name\": \"Rock {{runId}}\",\n  \"description\": \"Musica baseada em guitarra eletrica, baixo e bateria\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -365,7 +376,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"genreId\", pm.response.json().id);"
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"genreId\", pm.response.json().id);"
                 ]
               }
             }
@@ -471,7 +482,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Rock\",\n  \"description\": \"Rock classico\"\n}",
+              "raw": "{\n  \"name\": \"Rock {{runId}}\",\n  \"description\": \"Rock classico\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -526,7 +537,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"The Beatles\",\n  \"country\": \"United Kingdom\",\n  \"startYear\": 1960,\n  \"type\": \"BAND\"\n}",
+              "raw": "{\n  \"name\": \"The Beatles {{runId}}\",\n  \"country\": \"United Kingdom\",\n  \"startYear\": 1960,\n  \"type\": \"BAND\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -545,7 +556,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"artistId\", pm.response.json().id);"
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"artistId\", pm.response.json().id);"
                 ]
               }
             }
@@ -576,7 +587,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Billy Preston\",\n  \"country\": \"United States\",\n  \"startYear\": 1956,\n  \"type\": \"SOLO\"\n}",
+              "raw": "{\n  \"name\": \"Billy Preston {{runId}}\",\n  \"country\": \"United States\",\n  \"startYear\": 1956,\n  \"type\": \"SOLO\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -595,7 +606,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"featArtistId\", pm.response.json().id);"
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"featArtistId\", pm.response.json().id);"
                 ]
               }
             }
@@ -701,7 +712,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"The Beatles\",\n  \"country\": \"United Kingdom\",\n  \"startYear\": 1957,\n  \"type\": \"BAND\"\n}",
+              "raw": "{\n  \"name\": \"The Beatles {{runId}}\",\n  \"country\": \"United Kingdom\",\n  \"startYear\": 1957,\n  \"type\": \"BAND\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -770,7 +781,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"albumId\", pm.response.json().id);"
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"albumId\", pm.response.json().id);"
                 ]
               }
             }
@@ -941,7 +952,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"trackId\", pm.response.json().id);"
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"trackId\", pm.response.json().id);"
                 ]
               }
             }
@@ -1111,7 +1122,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"coverId\", pm.response.json().id);"
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"coverId\", pm.response.json().id);"
                 ]
               }
             }
@@ -1963,7 +1974,7 @@
                   "const body = pm.response.json();",
                   "pm.test(\"1 item por pagina\", () => pm.expect(body.page.size).to.eql(1));",
                   "pm.test(\"tem link para a proxima pagina\", () => pm.expect(body._links.next).to.exist);",
-                  "pm.collectionVariables.set(\"nextPage\", body._links.next.href);"
+                  "if (body._links.next) pm.collectionVariables.set(\"nextPage\", body._links.next.href);"
                 ]
               }
             }
@@ -1980,7 +1991,10 @@
               }
             ],
             "url": {
-              "raw": "{{nextPage}}"
+              "raw": "{{nextPage}}",
+              "host": [
+                "{{nextPage}}"
+              ]
             },
             "auth": {
               "type": "noauth"
@@ -2316,7 +2330,7 @@
                 "exec": [
                   "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
                   "pm.test(\"nao e repeticao\", () => pm.expect(pm.response.headers.get(\"X-Idempotency-Replayed\")).to.eql(\"false\"));",
-                  "pm.collectionVariables.set(\"idemGenreId\", pm.response.json().id);"
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"idemGenreId\", pm.response.json().id);"
                 ]
               }
             }
@@ -3277,7 +3291,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Rock\",\n  \"description\": \"Musica baseada em guitarra eletrica, baixo e bateria\"\n}",
+              "raw": "{\n  \"name\": \"Rock {{runId}}\",\n  \"description\": \"Musica baseada em guitarra eletrica, baixo e bateria\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3839,6 +3853,11 @@
     {
       "key": "idemGenreId",
       "value": "0",
+      "type": "string"
+    },
+    {
+      "key": "runId",
+      "value": "1",
       "type": "string"
     },
     {
