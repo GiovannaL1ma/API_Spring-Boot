@@ -42,7 +42,7 @@ public class OpenApiConfig {
 
     // versao do produto: aparece no Swagger e na raiz (/); tem que bater com o <version> do pom.xml
     // MAJOR muda quando quebra quem ja usa a API, MINOR quando acrescenta algo, PATCH quando so corrige
-    public static final String VERSION = "2.0.2";
+    public static final String VERSION = "2.0.3";
 
     private static final String SECURITY_SCHEME = "ApiKey";
     private static final String ANY_MEDIA_TYPE = "*/*";

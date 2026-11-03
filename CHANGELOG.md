@@ -12,6 +12,14 @@ São dois números diferentes:
   - **PATCH** (`2.1.0` → `2.1.1`): só corrige um erro, sem mudar o contrato.
 - **Versão de um endpoint** (header `X-API-Version`, valores `1` e `2`): quando o formato de um endpoint precisa mudar, a versão nova é criada **ao lado** da antiga, no mesmo endereço, e o cliente escolhe qual quer pelo header. Sem o header, a API responde a versão 1. No Swagger, cada versão aparece no seletor "Select a definition", no topo da página.
 
+## [2.0.3] - 2026-11-02
+
+É uma versão PATCH: corrige como a API descobre o IP do cliente no Render, sem mudar rotas nem respostas.
+
+### Corrigido
+
+- **IP do cliente no limite de requisições:** no Render, o pedido passa pela Cloudflare antes de chegar na API. Na 2.0.2, a API passou a usar o último IP do `X-Forwarded-For`, que é o servidor da Cloudflare que repassou o pedido, e não o cliente. Com isso, a contagem do limite variava a cada requisição, e clientes diferentes podiam dividir a mesma cota. Agora o IP vem do `CF-Connecting-IP`, que a Cloudflare preenche com o IP real e o cliente não consegue falsificar.
+
 ## [2.0.2] - 2026-11-02
 
 É uma versão PATCH: corrige falhas de segurança e de validação sem mudar as rotas nem os formatos de resposta.
