@@ -12,6 +12,25 @@ São dois números diferentes:
   - **PATCH** (`2.1.0` → `2.1.1`): só corrige um erro, sem mudar o contrato.
 - **Versão de um endpoint** (header `X-API-Version`, valores `1` e `2`): quando o formato de um endpoint precisa mudar, a versão nova é criada **ao lado** da antiga, no mesmo endereço, e o cliente escolhe qual quer pelo header. Sem o header, a API responde a versão 1. No Swagger, cada versão aparece no seletor "Select a definition", no topo da página.
 
+## [2.1.0] - 2026-11-03
+
+É uma versão MINOR: acrescenta o catálogo de exemplo e padroniza as respostas de erro. As rotas e as respostas de sucesso continuam iguais.
+
+### Alterado
+
+- **Erros no formato padrão Problem Details (RFC 9457):** toda resposta de erro agora é um JSON `application/problem+json` com `title`, `status`, `detail` (a mesma mensagem de antes) e `instance` (a rota). Nos erros de validação, os campos com problema, que antes vinham soltos no JSON, ficam dentro de `errors`.
+
+### Adicionado
+
+- **Catálogo de exemplo:** a API sobe com 5 artistas do rap nacional (AJULLIACOSTA, Mc Luanna, Tasha & Tracie, Duquesa e NandaTsunami), um álbum de cada, 41 faixas, as capas, 2 gravadoras e 2 gêneros, com os dados tirados do Spotify. A variável de ambiente `API_SAMPLE_DATA=false` faz a API subir vazia.
+- **Erro 500 no mesmo formato:** uma falha inesperada responde 500 sem mostrar detalhes internos e fica registrada no log.
+- **Swagger:** os exemplos de erro mostram o JSON completo, com o schema `ProblemDetail`, e o contato traz o nome de quem mantém a API.
+- **Testes automatizados** do formato dos erros, da documentação dos erros no Swagger e do catálogo de exemplo.
+
+### Alterado
+
+- **Coleção do Postman:** confere o formato dos erros e lê os erros de validação dentro de `errors`.
+
 ## [2.0.3] - 2026-11-02
 
 É uma versão PATCH: corrige como a API descobre o IP do cliente no Render, sem mudar rotas nem respostas.

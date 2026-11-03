@@ -8,7 +8,7 @@
   "item": [
     {
       "name": "0. Raiz",
-      "description": "Ponto de entrada da API: links HATEOAS para todas as colecoes.",
+      "description": "Ponto de entrada da API: links HATEOAS para todas as colecoes. A API ja sobe com um catalogo de exemplo.",
       "item": [
         {
           "name": "GET / (raiz da API)",
@@ -35,6 +35,44 @@
                 "exec": [
                   "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
                   "pm.test(\"traz os links\", () => pm.expect(pm.response.json()._links.artists).to.exist);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Catalogo de exemplo (albuns que ja vem cadastrados)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/albums?sort=id,asc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "albums"
+              ],
+              "query": [
+                {
+                  "key": "sort",
+                  "value": "id,asc"
+                }
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"lista paginada\", () => pm.expect(pm.response.json().page).to.exist);"
                 ]
               }
             }
@@ -3043,7 +3081,7 @@
     },
     {
       "name": "15. Validacoes e erros",
-      "description": "Cada erro responde com o status certo e o motivo.",
+      "description": "Cada erro responde com o status certo e o motivo, no formato padrao Problem Details (application/problem+json): title, status, detail (o motivo) e instance (a rota).",
       "item": [
         {
           "name": "Id que nao existe (404)",
@@ -3076,7 +3114,15 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"404 Not Found\", () => pm.response.to.have.status(404));"
+                  "pm.test(\"404 Not Found\", () => pm.response.to.have.status(404));",
+                  "pm.test(\"formato padrao (Problem Details)\", () => {",
+                  "    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "    const body = pm.response.json();",
+                  "    pm.expect(body.status).to.eql(404);",
+                  "    pm.expect(body.title).to.eql(\"Not Found\");",
+                  "    pm.expect(body.detail).to.include(\"999999\");",
+                  "    pm.expect(body.instance).to.eql(\"/albums/999999\");",
+                  "});"
                 ]
               }
             }
@@ -3163,7 +3209,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"400 Bad Request\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"diz o erro de cada campo\", () => pm.expect(pm.response.json().artists).to.exist);"
+                  "pm.test(\"diz o erro de cada campo\", () => pm.expect(pm.response.json().errors.artists).to.exist);"
                 ]
               }
             }

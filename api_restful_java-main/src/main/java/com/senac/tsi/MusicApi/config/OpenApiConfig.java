@@ -16,24 +16,31 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.IntegerSchema;
+import io.swagger.v3.oas.models.media.MapSchema;
 import io.swagger.v3.oas.models.media.MediaType;
+import io.swagger.v3.oas.models.media.ObjectSchema;
+import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.parameters.HeaderParameter;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.customizers.GlobalOpenApiCustomizer;
 import org.springdoc.core.customizers.GlobalOperationCustomizer;
 import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.lang.reflect.Method;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 // tudo o que aparece no Swagger alem das anotacoes dos controllers:
 // cabecalho (titulo, termos, licenca), um grupo por versao da API e a documentacao automatica de chave, idempotencia e rate limit
@@ -42,15 +49,19 @@ public class OpenApiConfig {
 
     // versao do produto: aparece no Swagger e na raiz (/); tem que bater com o <version> do pom.xml
     // MAJOR muda quando quebra quem ja usa a API, MINOR quando acrescenta algo, PATCH quando so corrige
-    public static final String VERSION = "2.0.3";
+    public static final String VERSION = "2.1.0";
 
     private static final String SECURITY_SCHEME = "ApiKey";
     private static final String ANY_MEDIA_TYPE = "*/*";
+    private static final String PROBLEM_MEDIA_TYPE = "application/problem+json";
+    private static final String PROBLEM_SCHEMA = "ProblemDetail";
 
     private final ApiProperties properties;
+    private final JsonMapper jsonMapper;
 
-    public OpenApiConfig(ApiProperties properties) {
+    public OpenApiConfig(ApiProperties properties, JsonMapper jsonMapper) {
         this.properties = properties;
+        this.jsonMapper = jsonMapper;
     }
 
     @Bean
@@ -64,7 +75,7 @@ public class OpenApiConfig {
                         // o link e relativo: o Swagger completa com o endereco do servidor, entao funciona local e no Render
                         .termsOfService("/terms.html")
                         .license(new License().name("MIT").url("/license.txt"))
-                        .contact(new Contact().name("TSI").url("https://www.sp.senac.br/")))
+                        .contact(new Contact().name("Giovanna Lima - TSI Senac").url("https://www.sp.senac.br/")))
                 // o botao Authorize do Swagger: guarda a chave e manda no header X-API-Key
                 .components(new Components().addSecuritySchemes(SECURITY_SCHEME, new SecurityScheme()
                         .type(SecurityScheme.Type.APIKEY)
@@ -78,6 +89,10 @@ public class OpenApiConfig {
         return "API RESTful para gerenciar um catalogo de discos: artistas, albuns, faixas, capas, generos e gravadoras, " +
                 "com albuns colaborativos e participacoes especiais (feat.). Todas as listagens sao paginadas (page, size, sort) " +
                 "e as respostas seguem HATEOAS (HAL).\n\n" +
+                "**Dados de exemplo:** a API ja sobe com 5 artistas do rap nacional, cada um com um album, as faixas e a capa.\n\n" +
+                "**Erros:** toda resposta de erro segue o formato padrao Problem Details (RFC 9457), em `application/problem+json`: " +
+                "`title` e `status` (o status HTTP), `detail` (o motivo) e `instance` (a rota). Nos erros de validacao, " +
+                "`errors` traz cada campo com o problema dele.\n\n" +
                 "**Versoes (header `X-API-Version`):** escolha a versao no seletor \"Select a definition\", no topo. " +
                 "Sem o header a API responde a versao 1. Na versao 2 as consultas de faixas trazem a duracao formatada (\"3:32\").\n\n" +
                 "**Chave de API (header `X-API-Key`):** ler e livre; criar, alterar e excluir exige chave. Gere a sua em POST /api-keys " +
@@ -190,6 +205,67 @@ public class OpenApiConfig {
                 "Too many requests: the limit is " + limits.anonymousPerMinute() + " requests per minute. Try again in 23 seconds");
         tooMany.addHeaderObject(HttpHeaders.RETRY_AFTER, intHeader("Segundos ate poder tentar de novo"));
         operation.getResponses().addApiResponse("429", tooMany);
+    }
+
+    // os controllers documentam so a mensagem de cada erro (o detail); aqui cada exemplo vira o JSON completo
+    // que a API devolve, com o schema ProblemDetail. Roda por ultimo, depois que todos os erros ja foram documentados
+    @Bean
+    public GlobalOpenApiCustomizer problemDetailCustomizer() {
+        return openApi -> {
+            openApi.getComponents().addSchemas(PROBLEM_SCHEMA, problemSchema());
+            openApi.getPaths().forEach((path, item) -> item.readOperations().forEach(operation ->
+                    operation.getResponses().forEach((status, response) -> {
+                        if (status.startsWith("4") || status.startsWith("5"))
+                            response.setContent(problemContent(path, Integer.parseInt(status), response.getContent()));
+                    })));
+        };
+    }
+
+    private Content problemContent(String path, int status, Content documented) {
+        MediaType problem = new MediaType().schema(new Schema<>().$ref("#/components/schemas/" + PROBLEM_SCHEMA));
+        if (documented != null)
+            documented.values().forEach(mediaType -> {
+                if (mediaType.getExample() != null)
+                    problem.setExample(problemExample(path, status, mediaType.getExample()));
+                if (mediaType.getExamples() != null)
+                    mediaType.getExamples().forEach((name, example) ->
+                            problem.addExamples(name, new Example().value(problemExample(path, status, example.getValue()))));
+            });
+        return new Content().addMediaType(PROBLEM_MEDIA_TYPE, problem);
+    }
+
+    // mesmo JSON que o ApiExceptionAdvice monta; o instance mostra a rota do endpoint (ex.: /artists/{id})
+    private Map<String, Object> problemExample(String path, int status, Object message) {
+        Map<String, Object> errors = validationErrors(message);
+        Map<String, Object> example = new LinkedHashMap<>();
+        example.put("title", HttpStatus.valueOf(status).getReasonPhrase());
+        example.put("status", status);
+        example.put("detail", errors == null ? message : "Validation failed for: " + String.join(", ", errors.keySet()));
+        example.put("instance", path);
+        if (errors != null)
+            example.put("errors", errors);
+        return example;
+    }
+
+    // exemplo de erro de validacao (um JSON com cada campo e o motivo) vira o "errors"; mensagem comum devolve null
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> validationErrors(Object message) {
+        if (message instanceof Map<?, ?> map)
+            return (Map<String, Object>) map;
+        String text = String.valueOf(message).trim();
+        return text.startsWith("{") ? jsonMapper.readValue(text, LinkedHashMap.class) : null;
+    }
+
+    private static Schema<?> problemSchema() {
+        return new ObjectSchema()
+                .description("Formato padrao das respostas de erro (RFC 9457 - Problem Details)")
+                .addProperty("type", new StringSchema().description("Tipo do erro. Vem omitido quando e about:blank (o status ja explica)"))
+                .addProperty("title", new StringSchema().description("Nome do status HTTP").example("Not Found"))
+                .addProperty("status", new IntegerSchema().description("Codigo do status HTTP").example(404))
+                .addProperty("detail", new StringSchema().description("O motivo do erro").example("Could not find artist with ID: 99"))
+                .addProperty("instance", new StringSchema().description("Rota que deu o erro").example("/artists/99"))
+                .addProperty("errors", new MapSchema().additionalProperties(new StringSchema())
+                        .description("So nos erros de validacao: cada campo (ou parametro) com o motivo"));
     }
 
     private static ApiResponse errorResponse(String description, String example) {

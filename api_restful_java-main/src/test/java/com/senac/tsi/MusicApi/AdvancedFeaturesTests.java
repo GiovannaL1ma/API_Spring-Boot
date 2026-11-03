@@ -155,6 +155,42 @@ class AdvancedFeaturesTests {
     }
 
     @Test
+    void errorsFollowTheProblemDetailFormat() throws Exception {
+        mvc.perform(get("/artists/abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.title").value("Bad Request"))
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.detail").value("Invalid value 'abc' for parameter 'id': it must be a whole number"))
+                .andExpect(jsonPath("$.instance").value("/artists/abc"));
+
+        // na validacao, o "errors" traz cada campo com o motivo
+        mvc.perform(post("/artists").header("X-API-Key", createUserKey()).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"\",\"country\":\"Brazil\",\"startYear\":1800,\"type\":\"SOLO\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value(containsString("startYear")))
+                .andExpect(jsonPath("$.errors.name").exists())
+                .andExpect(jsonPath("$.errors.startYear").exists());
+    }
+
+    @Test
+    void swaggerDocumentsErrorsInTheSameFormat() throws Exception {
+        mvc.perform(get("/v3/api-docs/v1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.schemas.ProblemDetail").exists())
+                .andExpect(jsonPath("$.paths['/artists/{id}'].get.responses['404'].content['application/problem+json'].example.detail")
+                        .value("Could not find artist with ID: 99"));
+    }
+
+    @Test
+    void startsWithSampleData() throws Exception {
+        mvc.perform(get("/artists/search").param("name", "AJULLIACOSTA"))
+                .andExpect(jsonPath("$.page.totalElements").value(1));
+        mvc.perform(get("/albums/search").param("title", "Brutas Amam"))
+                .andExpect(jsonPath("$.page.totalElements").value(1));
+    }
+
+    @Test
     void tracksHaveTwoVersionsSelectedByHeader() throws Exception {
         String userKey = createUserKey();
         long artistId = createAndGetId("/artists", userKey,

@@ -4,17 +4,18 @@ API RESTful para gerenciar um catálogo de discos: artistas, álbuns, faixas, ca
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
-![Versão](https://img.shields.io/badge/vers%C3%A3o-2.0.3-blue)
+![Versão](https://img.shields.io/badge/vers%C3%A3o-2.1.0-blue)
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-green)](LICENSE)
 
 - **CRUD completo** de 6 recursos, com listagens paginadas e ordenáveis
+- **Catálogo de exemplo:** a API já abre com 5 artistas do rap nacional, cada um com um álbum, as faixas e a capa
 - **Relacionamentos reais:** álbuns com vários artistas, participações especiais (feat.) em faixas, uma capa por álbum
 - **Chave de API** (`X-API-Key`) com dois níveis de acesso: leitura livre, escrita com chave, gestão das chaves só para ADMIN
 - **Idempotência** (`X-Idempotency-Key`): repetir um POST não cria registro duplicado
 - **Limite de requisições** por cliente, com os cabeçalhos `X-RateLimit-*` e `429` + `Retry-After`
 - **Duas versões** dos endpoints de faixas, escolhidas pelo header `X-API-Version`
 - **CORS** liberado só para as origens configuradas
-- **Erros que explicam o motivo:** toda resposta de erro diz qual campo, parâmetro ou header falhou e por quê
+- **Erros no formato padrão** (Problem Details, RFC 9457): toda resposta de erro diz qual campo, parâmetro ou header falhou e por quê
 
 ## Teste no ar
 
@@ -31,6 +32,8 @@ Para testar no Swagger:
 1. Em **API Keys → POST /api-keys**, clique em **Try it out** e **Execute**. Copie o valor do campo `apiKey` da resposta.
 2. Clique em **Authorize** (no topo), cole a chave e confirme. A partir daí o Swagger manda a chave em toda requisição.
 3. Abra qualquer endpoint, **Try it out** e **Execute**. O seletor **Select a definition** troca entre a versão 1 e a 2.
+
+Os `GET` já respondem com dados, porque a API sobe com o [catálogo de exemplo](#catálogo-de-exemplo).
 
 > Se a API ficar um tempo sem uso, o Render pode desligá-la. A primeira requisição depois disso demora um pouco mais, enquanto ela liga de novo.
 
@@ -52,7 +55,7 @@ Com a API no ar:
 | Raiz da API, com links para tudo | http://localhost:8080/ |
 | Console do banco H2 | http://localhost:8080/h2-console (JDBC URL `jdbc:h2:mem:musicdb`, usuário `sa`, senha vazia). Só existe rodando no seu computador: o Docker e o Render desligam o console |
 
-> O banco fica **em memória**: começa vazio e é apagado sempre que a aplicação reinicia (inclusive as chaves de API).
+> O banco fica **em memória**: sempre que a aplicação reinicia, ele volta só com o catálogo de exemplo, e o que foi criado depois (inclusive as chaves de API) é apagado. Para a API subir vazia, defina a variável de ambiente `API_SAMPLE_DATA=false`.
 
 **Chave ADMIN:** sem configuração nenhuma, a API gera uma chave ADMIN nova a cada execução e mostra no log, numa linha como `Chave ADMIN gerada para esta execucao: mca_...`. Para fixar uma chave, defina a variável de ambiente `API_ADMIN_KEY` antes de rodar (no Render: *Environment → Add Environment Variable*).
 
@@ -70,7 +73,7 @@ docker run -p 8080:8080 -e API_ADMIN_KEY=minha-chave-admin music-catalog-api
 ./mvnw test
 ```
 
-Os testes sobem a API inteira e conferem a chave de API, a idempotência (inclusive que repetir o `POST /api-keys` não devolve a chave de novo), as duas versões das faixas, o CORS, o limite de requisições, o 400 para listas com `null` e o motivo de cada 409.
+Os testes sobem a API inteira e conferem a chave de API, a idempotência (inclusive que repetir o `POST /api-keys` não devolve a chave de novo), as duas versões das faixas, o CORS, o limite de requisições, o 400 para listas com `null`, o motivo de cada 409, o formato padrão dos erros e o catálogo de exemplo.
 
 ### Coleção do Postman
 
@@ -82,6 +85,25 @@ A pasta [`postman/`](postman/) tem a coleção com todos os endpoints, organizad
 
 Para ver o **429**, rode a pasta *13. Limite de requisições* no Runner com 61 iterações.
 
+## Catálogo de exemplo
+
+A API sobe com 5 artistas da cena do rap nacional, cada um com um álbum. Os títulos, as faixas, as durações, os anos, os tipos e as gravadoras foram tirados do Spotify:
+
+| id | Artista | Álbum | Ano | Tipo | Gravadora | Faixas |
+|---|---|---|---|---|---|---|
+| 1 | AJULLIACOSTA | Brutas Amam, Choram e Sentem Raiva | 2023 | `STUDIO` | EMPIRE | 10 |
+| 2 | Mc Luanna | 44 | 2022 | `STUDIO` | independente | 8 |
+| 3 | Tasha & Tracie (`DUO`) | Yin Yang | 2023 | `EP` | independente | 6 |
+| 4 | Duquesa | TAURUS | 2023 | `STUDIO` | Boogie Naipe | 8 |
+| 5 | NandaTsunami | É Disso Que Eu Me Alimento | 2025 | `STUDIO` | independente | 9 |
+
+- O id de cada artista é o mesmo do álbum dele (ex.: `GET /albums/1` é o álbum da AJULLIACOSTA).
+- Os álbuns são dos gêneros **Rap** e **Trap**.
+- Em *99 Problemas*, faixa da Duquesa, a Mc Luanna é participação especial (`GET /tracks/featuring/2`).
+- Cada álbum tem a capa com a imagem do Spotify. O Spotify não informa quem fez as capas, então o `designer` vem como "Não informado".
+
+Os dados de exemplo ficam em [`config/SampleDataLoader.java`](api_restful_java-main/src/main/java/com/senac/tsi/MusicApi/config/SampleDataLoader.java).
+
 ## Primeiros passos
 
 Ler é livre, mas criar, alterar e excluir pede uma chave. Como um álbum aponta para artistas, gêneros e gravadora pelo `id`, crie nessa ordem: **gravadora → artista → gênero → álbum → faixas e capa**.
@@ -91,20 +113,22 @@ Pelo terminal (Git Bash, Linux ou macOS):
 ```bash
 API=http://localhost:8080
 
-# 1. gere uma chave e guarde o campo "apiKey" da resposta
+# 1. leia o catalogo de exemplo (sem chave)
+curl $API/albums/1                                # Brutas Amam, Choram e Sentem Raiva
+curl $API/tracks/album/1                          # tracklist na versao 1
+curl $API/tracks/album/1 -H "X-API-Version: 2"    # tracklist na versao 2
+
+# 2. gere uma chave e guarde o campo "apiKey" da resposta
 curl -X POST $API/api-keys -H "Content-Type: application/json" -d '{"ownerName": "Seu Nome", "ownerEmail": "voce@example.com"}'
 KEY=mca_cole_a_chave_aqui
 
-# 2. crie os registros mandando a chave no header X-API-Key
+# 3. crie os seus registros mandando a chave no header X-API-Key
+#    os primeiros ids ja sao do catalogo de exemplo, entao use o "id" que cada resposta devolver
 curl -X POST $API/labels  -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"name": "Parlophone", "country": "United Kingdom", "foundedYear": 1896}'
 curl -X POST $API/artists -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"name": "The Beatles", "country": "United Kingdom", "startYear": 1960, "type": "BAND"}'
 curl -X POST $API/genres  -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"name": "Rock"}'
-curl -X POST $API/albums  -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"title": "Revolver", "releaseYear": 1966, "type": "STUDIO", "label": {"id": 1}, "artists": [{"id": 1}], "genres": [{"id": 1}]}'
-curl -X POST $API/tracks  -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"title": "Taxman", "trackNumber": 1, "durationSeconds": 159, "album": {"id": 1}}'
-
-# 3. leia (sem chave)
-curl $API/tracks/album/1                          # tracklist na versao 1
-curl $API/tracks/album/1 -H "X-API-Version: 2"    # tracklist na versao 2
+curl -X POST $API/albums  -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"title": "Revolver", "releaseYear": 1966, "type": "STUDIO", "label": {"id": 3}, "artists": [{"id": 6}], "genres": [{"id": 3}]}'
+curl -X POST $API/tracks  -H "X-API-Key: $KEY" -H "Content-Type: application/json" -d '{"title": "Taxman", "trackNumber": 1, "durationSeconds": 159, "album": {"id": 6}}'
 ```
 
 > No PowerShell, `curl` é outro comando. Use o Git Bash ou o Swagger.
@@ -113,10 +137,10 @@ Cada resposta traz o recurso e os links para navegar até os relacionados. Exemp
 
 ```json
 {
-  "name": "The Beatles",
-  "country": "United Kingdom",
-  "startYear": 1960,
-  "type": "BAND",
+  "name": "AJULLIACOSTA",
+  "country": "Brazil",
+  "startYear": 2022,
+  "type": "SOLO",
   "id": 1,
   "_links": {
     "self":       { "href": "http://localhost:8080/artists/1" },
@@ -349,9 +373,27 @@ Fora do catálogo, a API guarda as **chaves de API** (`ApiKey`: dono, e-mail, ha
 
 ## Erros
 
-Toda resposta de erro diz o motivo:
+Toda resposta de erro segue o formato padrão **Problem Details** ([RFC 9457](https://www.rfc-editor.org/rfc/rfc9457)), com o header `Content-Type: application/problem+json`. Exemplo de `GET /artists/99`:
 
-| Status | Quando acontece | Exemplo de resposta |
+```json
+{
+  "title": "Not Found",
+  "status": 404,
+  "detail": "Could not find artist with ID: 99",
+  "instance": "/artists/99"
+}
+```
+
+| Campo | O que é |
+|---|---|
+| `title` e `status` | O status HTTP |
+| `detail` | O motivo do erro |
+| `instance` | A rota que deu o erro |
+| `errors` | Só nos erros de validação: cada campo (ou parâmetro) com o motivo |
+
+O campo `type` não aparece porque vale o padrão `about:blank`, que significa que o próprio status já explica o erro.
+
+| Status | Quando acontece | Exemplo de `detail` |
 |---|---|---|
 | **400** | Campo inválido, tipo errado no JSON, id que não é número, parâmetro faltando ou fora do limite, `sort` com campo inexistente, versão inexistente ou `X-Idempotency-Key` inválida | `Invalid value 'abc' for parameter 'id': it must be a whole number` |
 | **401** | Chave de API ausente (onde é exigida), inválida ou desativada | `Missing API key: send it in the X-API-Key header (create one with POST /api-keys)` |
@@ -362,16 +404,26 @@ Toda resposta de erro diz o motivo:
 | **415** | Corpo em outro formato que não JSON | `Content-Type 'text/plain' is not supported: send the body as application/json` |
 | **422** | `X-Idempotency-Key` reaproveitada com outra requisição | `X-Idempotency-Key 'abc-123' was already used with a different request; use a new key for a new operation` |
 | **429** | Passou do limite de requisições (o header `Retry-After` diz quando tentar de novo) | `Too many requests: the limit is 60 requests per minute. Try again in 23 seconds` |
+| **500** | Falha inesperada no servidor (fica registrada no log, sem mostrar detalhes internos) | `Unexpected error: the request could not be completed. Try again later` |
 
-Quando a validação do JSON falha, a resposta lista cada campo com o problema dele:
+Quando a validação falha, o `detail` lista os campos e o `errors` traz o problema de cada um:
 
 ```json
-{ "name": "tamanho deve ser entre 1 e 100", "startYear": "deve ser maior que ou igual à 1900" }
+{
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "Validation failed for: name, startYear",
+  "instance": "/artists",
+  "errors": {
+    "name": "tamanho deve ser entre 1 e 100",
+    "startYear": "deve ser maior que ou igual à 1900"
+  }
+}
 ```
 
 ## Versionamento do produto
 
-A versão do produto (hoje **2.0.3**) segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/) (`MAJOR.MINOR.PATCH`) e aparece no Swagger e na raiz (`/`). O histórico de cada versão está no [CHANGELOG.md](CHANGELOG.md).
+A versão do produto (hoje **2.1.0**) segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/) (`MAJOR.MINOR.PATCH`) e aparece no Swagger e na raiz (`/`). O histórico de cada versão está no [CHANGELOG.md](CHANGELOG.md).
 
 Para lançar uma versão nova:
 
@@ -380,9 +432,9 @@ Para lançar uma versão nova:
 3. Faça o commit, crie a tag e envie as duas coisas:
 
    ```bash
-   git tag -a v2.0.4 -m "Versao 2.0.4"
+   git tag -a v2.1.1 -m "Versao 2.1.1"
    git push origin main
-   git push origin v2.0.4
+   git push origin v2.1.1
    ```
 
 ## Tecnologias
@@ -411,7 +463,7 @@ Para lançar uma versão nova:
 │       │   ├── assembler/    # links HATEOAS de cada recurso
 │       │   ├── exception/    # excecoes e o ApiExceptionAdvice, que transforma cada uma na resposta de erro certa
 │       │   ├── web/          # roda antes dos controllers: chave de API, limite de requisicoes, idempotencia
-│       │   ├── config/       # Swagger, CORS, versionamento, Jackson e configuracoes "api.*"
+│       │   ├── config/       # Swagger, CORS, versionamento, Jackson, dados de exemplo e configuracoes "api.*"
 │       │   └── util/         # hash SHA-256
 │       ├── main/resources/
 │       │   ├── application.properties
