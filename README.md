@@ -4,7 +4,7 @@ API RESTful para gerenciar um catálogo de discos: artistas, álbuns, faixas, ca
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
-![Versão](https://img.shields.io/badge/vers%C3%A3o-2.1.0-blue)
+![Versão](https://img.shields.io/badge/vers%C3%A3o-2.1.1-blue)
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-green)](LICENSE)
 
 - **CRUD completo** de 6 recursos, com listagens paginadas e ordenáveis
@@ -423,7 +423,7 @@ Quando a validação falha, o `detail` lista os campos e o `errors` traz o probl
 
 ## Versionamento do produto
 
-A versão do produto (hoje **2.1.0**) segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/) (`MAJOR.MINOR.PATCH`) e aparece no Swagger e na raiz (`/`). O histórico de cada versão está no [CHANGELOG.md](CHANGELOG.md).
+A versão do produto (hoje **2.1.1**) segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/) (`MAJOR.MINOR.PATCH`) e aparece no Swagger e na raiz (`/`). O histórico de cada versão está no [CHANGELOG.md](CHANGELOG.md).
 
 Para lançar uma versão nova:
 
@@ -432,9 +432,9 @@ Para lançar uma versão nova:
 3. Faça o commit, crie a tag e envie as duas coisas:
 
    ```bash
-   git tag -a v2.1.1 -m "Versao 2.1.1"
+   git tag -a v2.1.2 -m "Versao 2.1.2"
    git push origin main
-   git push origin v2.1.1
+   git push origin v2.1.2
    ```
 
 ## Tecnologias

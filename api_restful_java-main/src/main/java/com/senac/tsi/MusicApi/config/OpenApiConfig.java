@@ -49,8 +49,9 @@ public class OpenApiConfig {
 
     // versao do produto: aparece no Swagger e na raiz (/); tem que bater com o <version> do pom.xml
     // MAJOR muda quando quebra quem ja usa a API, MINOR quando acrescenta algo, PATCH quando so corrige
-    public static final String VERSION = "2.1.0";
+    public static final String VERSION = "2.1.1";
 
+    private static final String TITLE = "Music Catalog API";
     private static final String SECURITY_SCHEME = "ApiKey";
     private static final String ANY_MEDIA_TYPE = "*/*";
     private static final String PROBLEM_MEDIA_TYPE = "application/problem+json";
@@ -68,14 +69,15 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("Music Catalog API")
+                        .title(TITLE)
                         .version(VERSION)
                         .description(description())
                         // termos e licenca sao servidos pela propria API (src/main/resources/static)
                         // o link e relativo: o Swagger completa com o endereco do servidor, entao funciona local e no Render
                         .termsOfService("/terms.html")
                         .license(new License().name("MIT").url("/license.txt"))
-                        .contact(new Contact().name("Giovanna Lima - TSI Senac").url("https://www.sp.senac.br/")))
+                        // com email, o Swagger mostra o link "Send email to Giovanna Lima"
+                        .contact(new Contact().name("Giovanna Lima").email("giovannalimarios@outlook.com")))
                 // o botao Authorize do Swagger: guarda a chave e manda no header X-API-Key
                 .components(new Components().addSecuritySchemes(SECURITY_SCHEME, new SecurityScheme()
                         .type(SecurityScheme.Type.APIKEY)
@@ -89,10 +91,6 @@ public class OpenApiConfig {
         return "API RESTful para gerenciar um catalogo de discos: artistas, albuns, faixas, capas, generos e gravadoras, " +
                 "com albuns colaborativos e participacoes especiais (feat.). Todas as listagens sao paginadas (page, size, sort) " +
                 "e as respostas seguem HATEOAS (HAL).\n\n" +
-                "**Dados de exemplo:** a API ja sobe com 5 artistas do rap nacional, cada um com um album, as faixas e a capa.\n\n" +
-                "**Erros:** toda resposta de erro segue o formato padrao Problem Details (RFC 9457), em `application/problem+json`: " +
-                "`title` e `status` (o status HTTP), `detail` (o motivo) e `instance` (a rota). Nos erros de validacao, " +
-                "`errors` traz cada campo com o problema dele.\n\n" +
                 "**Versoes (header `X-API-Version`):** escolha a versao no seletor \"Select a definition\", no topo. " +
                 "Sem o header a API responde a versao 1. Na versao 2 as consultas de faixas trazem a duracao formatada (\"3:32\").\n\n" +
                 "**Chave de API (header `X-API-Key`):** ler e livre; criar, alterar e excluir exige chave. Gere a sua em POST /api-keys " +
@@ -103,7 +101,7 @@ public class OpenApiConfig {
                 " com chave; passou disso, a resposta e 429 com o header Retry-After.";
     }
 
-    // um grupo por versao: o seletor do Swagger troca entre eles e cada um ja manda o X-API-Version certo
+    // um grupo por versao: o seletor do Swagger troca entre eles ("Music Catalog API v1" e "v2") e cada um ja manda o X-API-Version certo
     @Bean
     public GroupedOpenApi v1Api() {
         return versionGroup("1", false);
@@ -117,7 +115,7 @@ public class OpenApiConfig {
     private static GroupedOpenApi versionGroup(String version, boolean headerRequired) {
         return GroupedOpenApi.builder()
                 .group("v" + version)
-                .displayName("v" + version + " (" + WebConfig.API_VERSION_HEADER + ": " + version + ")")
+                .displayName(TITLE + " v" + version)
                 .addOpenApiMethodFilter(method -> belongsToVersion(method, version))
                 .addOperationCustomizer((operation, handlerMethod) -> {
                     // o springdoc ja poe um X-API-Version generico nos endpoints versionados; troca pelo deste grupo

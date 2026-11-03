@@ -12,6 +12,16 @@ São dois números diferentes:
   - **PATCH** (`2.1.0` → `2.1.1`): só corrige um erro, sem mudar o contrato.
 - **Versão de um endpoint** (header `X-API-Version`, valores `1` e `2`): quando o formato de um endpoint precisa mudar, a versão nova é criada **ao lado** da antiga, no mesmo endereço, e o cliente escolhe qual quer pelo header. Sem o header, a API responde a versão 1. No Swagger, cada versão aparece no seletor "Select a definition", no topo da página.
 
+## [2.1.1] - 2026-11-03
+
+É uma versão PATCH: só muda o cabeçalho do Swagger. As rotas e as respostas não mudaram.
+
+### Alterado
+
+- **Seletor de versões do Swagger:** "Select a definition" mostra "Music Catalog API v1" e "Music Catalog API v2", no lugar de "v1 (X-API-Version: 1)" e "v2 (X-API-Version: 2)".
+- **Contato:** o cabeçalho mostra o link "Send email to Giovanna Lima", no lugar do site do Senac.
+- **Descrição:** os parágrafos sobre o catálogo de exemplo e o formato dos erros saíram do cabeçalho. Eles continuam no README.
+
 ## [2.1.0] - 2026-11-03
 
 É uma versão MINOR: acrescenta o catálogo de exemplo e padroniza as respostas de erro. As rotas e as respostas de sucesso continuam iguais.
