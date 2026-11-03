@@ -12,6 +12,19 @@ São dois números diferentes:
   - **PATCH** (`2.1.0` → `2.1.1`): só corrige um erro, sem mudar o contrato.
 - **Versão de um endpoint** (header `X-API-Version`, valores `1` e `2`): quando o formato de um endpoint precisa mudar, a versão nova é criada **ao lado** da antiga, no mesmo endereço, e o cliente escolhe qual quer pelo header. Sem o header, a API responde a versão 1. No Swagger, cada versão aparece no seletor "Select a definition", no topo da página.
 
+## [2.0.1] - 2026-11-02
+
+É uma versão PATCH: corrige um erro sem mudar as rotas nem os formatos de resposta.
+
+### Corrigido
+
+- **Chave de API na idempotência:** repetir o `POST /api-keys` com a mesma `X-Idempotency-Key` devolvia a chave completa de novo, porque a resposta guardada incluía o campo `apiKey`. Agora a resposta guardada sai sem esse campo: a repetição continua sem criar outra chave, a chave completa só aparece na primeira resposta e a API volta a guardar apenas o hash dela.
+
+### Adicionado
+
+- **Coleção do Postman** (`postman/`) com todos os endpoints e as demonstrações de paginação, versionamento, idempotência, chave de API, limite de requisições, CORS e erros.
+- **Teste automatizado** da repetição do `POST /api-keys` (`AdvancedFeaturesTests`).
+
 ## [2.0.0] - 2026-11-02
 
 Entrega da fase 2. É uma versão MAJOR porque as rotas perderam o prefixo `/v1` (a versão passou para o header `X-API-Version`) e porque criar, alterar e excluir passou a exigir chave de API.

@@ -89,6 +89,27 @@ class AdvancedFeaturesTests {
     }
 
     @Test
+    void repeatedKeyCreationDoesNotRevealTheKeyAgain() throws Exception {
+        String body = "{\"ownerName\":\"Repetida\",\"ownerEmail\":\"repetida@example.com\"}";
+
+        MvcResult first = mvc.perform(post("/api-keys").header("X-Idempotency-Key", "chave-repetida")
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.apiKey").exists())
+                .andReturn();
+        long id = ((Number) JsonPath.read(first.getResponse().getContentAsString(), "$.id")).longValue();
+
+        // a repeticao nao cria outra chave e nao devolve a chave completa (ela nao fica guardada)
+        mvc.perform(post("/api-keys").header("X-Idempotency-Key", "chave-repetida")
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("X-Idempotency-Replayed", "true"))
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.keyPrefix").exists())
+                .andExpect(jsonPath("$.apiKey").doesNotExist());
+    }
+
+    @Test
     void tracksHaveTwoVersionsSelectedByHeader() throws Exception {
         String userKey = createUserKey();
         long artistId = createAndGetId("/artists", userKey,

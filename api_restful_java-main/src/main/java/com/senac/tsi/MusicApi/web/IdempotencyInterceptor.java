@@ -12,6 +12,9 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 import org.springframework.web.util.WebUtils;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -27,10 +30,12 @@ public class IdempotencyInterceptor implements HandlerInterceptor {
 
     private final IdempotencyService idempotencyService;
     private final ApiKeyResolver apiKeyResolver;
+    private final JsonMapper jsonMapper;
 
-    public IdempotencyInterceptor(IdempotencyService idempotencyService, ApiKeyResolver apiKeyResolver) {
+    public IdempotencyInterceptor(IdempotencyService idempotencyService, ApiKeyResolver apiKeyResolver, JsonMapper jsonMapper) {
         this.idempotencyService = idempotencyService;
         this.apiKeyResolver = apiKeyResolver;
+        this.jsonMapper = jsonMapper;
     }
 
     @Override
@@ -76,11 +81,28 @@ public class IdempotencyInterceptor implements HandlerInterceptor {
         ContentCachingResponseWrapper cachedResponse = WebUtils.getNativeResponse(response, ContentCachingResponseWrapper.class);
         int status = response.getStatus();
         if (cachedResponse != null && status >= 200 && status < 300) {
+            String body = new String(cachedResponse.getContentAsByteArray(), StandardCharsets.UTF_8);
             idempotencyService.complete((long) recordId, status, response.getContentType(),
-                    response.getHeader(HttpHeaders.LOCATION),
-                    new String(cachedResponse.getContentAsByteArray(), StandardCharsets.UTF_8));
+                    response.getHeader(HttpHeaders.LOCATION), withoutOmittedFields(handler, body));
         } else {
             idempotencyService.abandon((long) recordId);
+        }
+    }
+
+    // tira da resposta guardada os campos marcados com @OmitOnReplay (ex.: a chave de API completa),
+    // para o segredo nao ficar salvo no banco nem voltar numa repeticao
+    private String withoutOmittedFields(Object handler, String body) {
+        OmitOnReplay omit = handler instanceof HandlerMethod method ? method.getMethodAnnotation(OmitOnReplay.class) : null;
+        if (omit == null || body.isEmpty())
+            return body;
+        try {
+            if (!(jsonMapper.readTree(body) instanceof ObjectNode json))
+                return null;
+            for (String field : omit.value())
+                json.remove(field);
+            return jsonMapper.writeValueAsString(json);
+        } catch (JacksonException e) {
+            return null; // na duvida, nao guarda o corpo
         }
     }
 

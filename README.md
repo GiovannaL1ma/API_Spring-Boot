@@ -4,7 +4,7 @@ API RESTful para gerenciar um catálogo de discos: artistas, álbuns, faixas, ca
 
 ![Java](https://img.shields.io/badge/Java-21-orange)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.1-6DB33F)
-![Versão](https://img.shields.io/badge/vers%C3%A3o-2.0.0-blue)
+![Versão](https://img.shields.io/badge/vers%C3%A3o-2.0.1-blue)
 [![Licença MIT](https://img.shields.io/badge/licen%C3%A7a-MIT-green)](LICENSE)
 
 - **CRUD completo** de 6 recursos, com listagens paginadas e ordenáveis
@@ -71,6 +71,16 @@ docker run -p 8080:8080 -e API_ADMIN_KEY=minha-chave-admin music-catalog-api
 ```
 
 Os testes sobem a API inteira e conferem a chave de API, a idempotência, as duas versões das faixas, o CORS e o limite de requisições.
+
+### Coleção do Postman
+
+A pasta [`postman/`](postman/) tem a coleção com todos os endpoints, organizada na ordem de uso: gerar a chave, cadastrar (gravadora, gênero, artista, álbum, faixa, capa), consultar e, depois, demonstrar paginação, versionamento, idempotência, chave de API, limite de requisições, CORS e erros. A última pasta apaga o que foi criado, para a coleção poder rodar de novo.
+
+1. No Postman, clique em **Import** e escolha `postman/Music-Catalog-API.postman_collection.json`.
+2. Na aba **Variables** da coleção, confira o `baseUrl` (`http://localhost:8080` ou o endereço do Render) e troque o valor do `adminKey` (`cole-aqui-a-chave-admin`) pela chave ADMIN.
+3. Rode as pastas na ordem, ou a coleção inteira pelo **Run collection**. A chave gerada e os ids criados ficam guardados nas variáveis, e cada requisição confere o status esperado na aba **Test Results**.
+
+Para ver o **429**, rode a pasta *13. Limite de requisições* no Runner com 61 iterações.
 
 ## Primeiros passos
 
@@ -145,6 +155,8 @@ Em qualquer `POST`, mande um valor único por operação (um UUID, por exemplo).
 | A primeira requisição deu erro (ex.: 400) | A chave é liberada para tentar de novo com os dados corrigidos |
 
 A chave vale por cliente: duas chaves de API diferentes podem usar o mesmo valor sem conflito.
+
+No `POST /api-keys`, a resposta guardada **não inclui a chave completa** (campo `apiKey`): a repetição não cria outra chave e devolve os dados dela sem esse campo. Assim a API continua guardando só o hash, e a chave aparece uma única vez.
 
 ### Limite de requisições
 
@@ -359,7 +371,7 @@ Quando a validação do JSON falha, a resposta lista cada campo com o problema d
 
 ## Versionamento do produto
 
-A versão do produto (hoje **2.0.0**) segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/) (`MAJOR.MINOR.PATCH`) e aparece no Swagger e na raiz (`/`). O histórico de cada versão está no [CHANGELOG.md](CHANGELOG.md).
+A versão do produto (hoje **2.0.1**) segue o [Versionamento Semântico](https://semver.org/lang/pt-BR/) (`MAJOR.MINOR.PATCH`) e aparece no Swagger e na raiz (`/`). O histórico de cada versão está no [CHANGELOG.md](CHANGELOG.md).
 
 Para lançar uma versão nova:
 
@@ -405,6 +417,7 @@ Para lançar uma versão nova:
 │       │   ├── application.properties
 │       │   └── static/       # termos de servico e licenca servidos pela API
 │       └── test/             # testes automatizados
+├── postman/                               # colecao do Postman com todos os endpoints
 ├── CHANGELOG.md
 └── LICENSE
 ```

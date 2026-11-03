@@ -8,6 +8,7 @@ import com.senac.tsi.MusicApi.model.ApiKey;
 import com.senac.tsi.MusicApi.model.ApiKeyRole;
 import com.senac.tsi.MusicApi.service.ApiKeyService;
 import com.senac.tsi.MusicApi.web.ApiKeyResolver;
+import com.senac.tsi.MusicApi.web.OmitOnReplay;
 import com.senac.tsi.MusicApi.web.RequiresApiKey;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -51,12 +52,14 @@ public class ApiKeyController {
     }
 
     @Operation(summary = "Creates a new API key", description = "Publico: gera uma chave com nivel USER. A chave completa (campo apiKey) " +
-            "so aparece nesta resposta, porque a API guarda apenas o hash dela; se perder, gere outra")
+            "so aparece nesta resposta, porque a API guarda apenas o hash dela; se perder, gere outra. " +
+            "Com X-Idempotency-Key, repetir o pedido nao cria outra chave e devolve os dados dela sem o campo apiKey")
     @ApiResponse(responseCode = "201", description = "API key created; the apiKey field has the key to send in the X-API-Key header")
     @ApiResponse(responseCode = "400", description = "Bad request on the payload - ownerName vazio ou fora de 2 a 100 caracteres, " +
             "ownerEmail vazio ou que nao e um e-mail valido, ou o JSON esta mal formado",
             content = @Content(examples = @ExampleObject(name = "Campo invalido",
                     value = "{ \"ownerEmail\": \"deve ser um endereço de e-mail bem formado\" }")))
+    @OmitOnReplay("apiKey") // a chave completa nao fica guardada na idempotencia: so aparece na primeira resposta
     @PostMapping
     public ResponseEntity<EntityModel<ApiKeyResponse>> createKey(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
