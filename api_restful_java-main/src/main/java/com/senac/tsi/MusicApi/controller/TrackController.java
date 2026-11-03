@@ -118,7 +118,7 @@ public class TrackController {
                     @ExampleObject(name = "Album", value = "Could not find album with ID: 99"),
                     @ExampleObject(name = "Artista", value = "Could not find artist with ID: 99")}))
     @ApiResponse(responseCode = "409", description = "Track number already used on this album - ja existe outra faixa com esse trackNumber no mesmo album",
-            content = @Content(examples = @ExampleObject(value = "Operation conflicts with existing data: a value that must be unique is already in use")))
+            content = @Content(examples = @ExampleObject(value = "This album already has a track with this trackNumber")))
     @RequiresApiKey
     @PostMapping("/tracks")
     public ResponseEntity<EntityModel<Track>> newTrack(
@@ -149,7 +149,7 @@ public class TrackController {
                     @ExampleObject(name = "Faixa", value = "Could not find track with ID: 99"),
                     @ExampleObject(name = "Album", value = "Could not find album with ID: 99")}))
     @ApiResponse(responseCode = "409", description = "Track number already used on this album - ja existe outra faixa com esse trackNumber no mesmo album",
-            content = @Content(examples = @ExampleObject(value = "Operation conflicts with existing data: a value that must be unique is already in use")))
+            content = @Content(examples = @ExampleObject(value = "This album already has a track with this trackNumber")))
     @RequiresApiKey
     @PutMapping("/tracks/{id}")
     public ResponseEntity<EntityModel<Track>> updateTrack(

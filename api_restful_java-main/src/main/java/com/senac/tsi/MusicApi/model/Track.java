@@ -42,7 +42,7 @@ public class Track {
     @JoinTable(name = "track_featured_artist",
             joinColumns = @JoinColumn(name = "track_id"),
             inverseJoinColumns = @JoinColumn(name = "artist_id"))
-    private Set<Artist> featuredArtists = new HashSet<>();
+    private Set<@NotNull Artist> featuredArtists = new HashSet<>(); // @NotNull no item: [null] vira 400 em vez de 500
 
     public Track() {
     }

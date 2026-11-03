@@ -75,7 +75,7 @@ public class GenreController {
                     @ExampleObject(name = "Tipo errado", value = "Invalid value for field 'description': expected String"),
                     @ExampleObject(name = "JSON mal formado", value = "Malformed JSON: check quotes, commas and braces")}))
     @ApiResponse(responseCode = "409", description = "A genre with this name already exists - o name do genero e unico e ja existe outro genero com esse nome",
-            content = @Content(examples = @ExampleObject(value = "Operation conflicts with existing data: a value that must be unique is already in use")))
+            content = @Content(examples = @ExampleObject(value = "A genre with this name already exists")))
     @RequiresApiKey
     @PostMapping("/genres")
     public ResponseEntity<EntityModel<Genre>> newGenre(
@@ -103,7 +103,7 @@ public class GenreController {
     @ApiResponse(responseCode = "404", description = "Genre not found - nao existe genero com esse id para atualizar",
             content = @Content(examples = @ExampleObject(value = "Could not find genre with ID: 99")))
     @ApiResponse(responseCode = "409", description = "A genre with this name already exists - o novo name ja pertence a outro genero",
-            content = @Content(examples = @ExampleObject(value = "Operation conflicts with existing data: a value that must be unique is already in use")))
+            content = @Content(examples = @ExampleObject(value = "A genre with this name already exists")))
     @RequiresApiKey
     @PutMapping("/genres/{id}")
     public ResponseEntity<EntityModel<Genre>> updateGenre(

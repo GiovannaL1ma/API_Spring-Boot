@@ -23,4 +23,7 @@ COPY --from=build /app/target/*.jar app.jar
 ENV PORT=8080
 EXPOSE 8080
 
+# o console do H2 e so para desenvolvimento: publicado, ele daria acesso ao banco inteiro
+ENV SPRING_H2_CONSOLE_ENABLED=false
+
 ENTRYPOINT ["sh", "-c", "java -Dserver.port=$PORT -jar app.jar"]

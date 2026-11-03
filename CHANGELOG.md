@@ -12,6 +12,21 @@ São dois números diferentes:
   - **PATCH** (`2.1.0` → `2.1.1`): só corrige um erro, sem mudar o contrato.
 - **Versão de um endpoint** (header `X-API-Version`, valores `1` e `2`): quando o formato de um endpoint precisa mudar, a versão nova é criada **ao lado** da antiga, no mesmo endereço, e o cliente escolhe qual quer pelo header. Sem o header, a API responde a versão 1. No Swagger, cada versão aparece no seletor "Select a definition", no topo da página.
 
+## [2.0.2] - 2026-11-02
+
+É uma versão PATCH: corrige falhas de segurança e de validação sem mudar as rotas nem os formatos de resposta.
+
+### Segurança
+
+- **Console do H2 desligado no deploy:** o `Dockerfile` desliga o `/h2-console`, que só deve existir no computador de quem desenvolve. Publicado, ele dava acesso ao banco inteiro.
+- **IP do cliente vem do proxy, não do cliente:** com `server.forward-headers-strategy=native`, a API usa o IP que o proxy do Render acrescenta no `X-Forwarded-For`, e não o primeiro da lista, que o cliente pode inventar. Antes, mandar um `X-Forwarded-For` falso dava uma cota nova no limite de requisições e fazia o console do H2 achar que o acesso vinha do próprio servidor.
+
+### Corrigido
+
+- **Lista com `null`:** `"artists": [null]`, `"genres": [null]` e `"featuredArtists": [null]` respondiam 500. Agora respondem 400 dizendo qual lista está errada.
+- **Motivo do 409:** em vez de "a value that must be unique is already in use", a resposta diz o que repetiu: nome de artista, gênero ou gravadora, número da faixa no álbum ou capa do álbum.
+- **Coleção do Postman:** o link `next` da paginação era perdido na importação, e uma rodada interrompida deixava dados que davam 409 na seguinte. Agora os nomes levam um número diferente a cada rodada.
+
 ## [2.0.1] - 2026-11-02
 
 É uma versão PATCH: corrige um erro sem mudar as rotas nem os formatos de resposta.

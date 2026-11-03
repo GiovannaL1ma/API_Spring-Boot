@@ -74,7 +74,7 @@ public class RecordLabelController {
                     @ExampleObject(name = "Tipo errado", value = "Invalid value for field 'foundedYear': expected Integer"),
                     @ExampleObject(name = "JSON mal formado", value = "Malformed JSON: check quotes, commas and braces")}))
     @ApiResponse(responseCode = "409", description = "A record label with this name already exists - o name da gravadora e unico e ja existe outra gravadora com esse nome",
-            content = @Content(examples = @ExampleObject(value = "Operation conflicts with existing data: a value that must be unique is already in use")))
+            content = @Content(examples = @ExampleObject(value = "A record label with this name already exists")))
     @RequiresApiKey
     @PostMapping("/labels")
     public ResponseEntity<EntityModel<RecordLabel>> newLabel(
@@ -102,7 +102,7 @@ public class RecordLabelController {
     @ApiResponse(responseCode = "404", description = "Record label not found - nao existe gravadora com esse id para atualizar",
             content = @Content(examples = @ExampleObject(value = "Could not find record label with ID: 99")))
     @ApiResponse(responseCode = "409", description = "A record label with this name already exists - o novo name ja pertence a outra gravadora",
-            content = @Content(examples = @ExampleObject(value = "Operation conflicts with existing data: a value that must be unique is already in use")))
+            content = @Content(examples = @ExampleObject(value = "A record label with this name already exists")))
     @RequiresApiKey
     @PutMapping("/labels/{id}")
     public ResponseEntity<EntityModel<RecordLabel>> updateLabel(

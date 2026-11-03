@@ -77,7 +77,7 @@ public class ArtistController {
                     @ExampleObject(name = "Tipo errado", value = "Invalid value for field 'name': expected String"),
                     @ExampleObject(name = "JSON mal formado", value = "Malformed JSON: check quotes, commas and braces")}))
     @ApiResponse(responseCode = "409", description = "An artist with this name already exists - o name do artista e unico e ja existe outro artista com esse nome",
-            content = @Content(examples = @ExampleObject(value = "Operation conflicts with existing data: a value that must be unique is already in use")))
+            content = @Content(examples = @ExampleObject(value = "An artist with this name already exists")))
     @RequiresApiKey
     @PostMapping("/artists")
     public ResponseEntity<EntityModel<Artist>> newArtist(
@@ -107,7 +107,7 @@ public class ArtistController {
     @ApiResponse(responseCode = "404", description = "Artist not found - nao existe artista com esse id para atualizar",
             content = @Content(examples = @ExampleObject(value = "Could not find artist with ID: 99")))
     @ApiResponse(responseCode = "409", description = "An artist with this name already exists - o novo name ja pertence a outro artista",
-            content = @Content(examples = @ExampleObject(value = "Operation conflicts with existing data: a value that must be unique is already in use")))
+            content = @Content(examples = @ExampleObject(value = "An artist with this name already exists")))
     @RequiresApiKey
     @PutMapping("/artists/{id}")
     public ResponseEntity<EntityModel<Artist>> updateArtist(

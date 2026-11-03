@@ -164,11 +164,25 @@ public class ApiExceptionAdvice {
         return ex.getMessage();
     }
 
+    // indice unico, como aparece na mensagem do banco -> motivo do 409
+    private static final Map<String, String> UNIQUE_VIOLATIONS = Map.of(
+            "PUBLIC.TRACK(ALBUM_ID", "This album already has a track with this trackNumber",
+            "PUBLIC.COVER(ALBUM_ID", "This album already has a cover: update or delete it instead of creating another",
+            "PUBLIC.ARTIST(NAME", "An artist with this name already exists",
+            "PUBLIC.GENRE(NAME", "A genre with this name already exists",
+            "PUBLIC.RECORD_LABEL(NAME", "A record label with this name already exists");
+
     // 409 - o banco barrou um valor repetido num campo unico (nome, numero da faixa no album, capa do album)
+    // a mensagem do banco traz a tabela e a coluna do indice, e por elas a resposta diz qual valor repetiu
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     String conflictHandler(DataIntegrityViolationException ex) {
-        return "Operation conflicts with existing data: a value that must be unique is already in use";
+        String detail = String.valueOf(ex.getMostSpecificCause().getMessage()).toUpperCase();
+        return UNIQUE_VIOLATIONS.entrySet().stream()
+                .filter(violation -> detail.contains(violation.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElse("Operation conflicts with existing data: a value that must be unique is already in use");
     }
 
     // 400, 409 ou 422 - problema com a X-Idempotency-Key (cada caso ja traz o status certo)

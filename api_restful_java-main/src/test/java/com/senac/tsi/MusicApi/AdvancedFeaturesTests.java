@@ -110,6 +110,51 @@ class AdvancedFeaturesTests {
     }
 
     @Test
+    void nullInsideListsIsBadRequestNotServerError() throws Exception {
+        String userKey = createUserKey();
+        long artistId = createAndGetId("/artists", userKey,
+                "{\"name\":\"Lista Nula\",\"country\":\"Brazil\",\"startYear\":1990,\"type\":\"SOLO\"}");
+        long albumId = createAndGetId("/albums", userKey,
+                "{\"title\":\"Album Lista\",\"releaseYear\":2000,\"type\":\"STUDIO\",\"artists\":[{\"id\":" + artistId + "}]}");
+
+        mvc.perform(post("/albums").header("X-API-Key", userKey).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"X\",\"releaseYear\":2000,\"type\":\"STUDIO\",\"artists\":[null]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("artists")));
+        mvc.perform(post("/albums").header("X-API-Key", userKey).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"X\",\"releaseYear\":2000,\"type\":\"STUDIO\",\"artists\":[{\"id\":" + artistId + "}],\"genres\":[null]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("genres")));
+        mvc.perform(post("/tracks").header("X-API-Key", userKey).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"X\",\"trackNumber\":1,\"durationSeconds\":10,\"album\":{\"id\":" + albumId + "},\"featuredArtists\":[null]}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("featuredArtists")));
+    }
+
+    @Test
+    void conflictsSayWhichValueIsRepeated() throws Exception {
+        String userKey = createUserKey();
+        String label = "{\"name\":\"Gravadora Repetida\",\"country\":\"Brazil\",\"foundedYear\":1990}";
+        String genre = "{\"name\":\"Genero Repetido\"}";
+        String artist = "{\"name\":\"Artista Repetido\",\"country\":\"Brazil\",\"startYear\":1990,\"type\":\"SOLO\"}";
+        createAndGetId("/labels", userKey, label);
+        createAndGetId("/genres", userKey, genre);
+        long artistId = createAndGetId("/artists", userKey, artist);
+        long albumId = createAndGetId("/albums", userKey,
+                "{\"title\":\"Album Repetido\",\"releaseYear\":2000,\"type\":\"STUDIO\",\"artists\":[{\"id\":" + artistId + "}]}");
+        String track = "{\"title\":\"Faixa\",\"trackNumber\":1,\"durationSeconds\":10,\"album\":{\"id\":" + albumId + "}}";
+        String cover = "{\"designer\":\"Designer\",\"description\":\"Capa\",\"imageUrl\":\"https://example.com/c.jpg\",\"album\":{\"id\":" + albumId + "}}";
+        createAndGetId("/tracks", userKey, track);
+        createAndGetId("/covers", userKey, cover);
+
+        expectConflict("/labels", userKey, label, "A record label with this name already exists");
+        expectConflict("/genres", userKey, genre, "A genre with this name already exists");
+        expectConflict("/artists", userKey, artist, "An artist with this name already exists");
+        expectConflict("/tracks", userKey, track, "This album already has a track with this trackNumber");
+        expectConflict("/covers", userKey, cover, "This album already has a cover");
+    }
+
+    @Test
     void tracksHaveTwoVersionsSelectedByHeader() throws Exception {
         String userKey = createUserKey();
         long artistId = createAndGetId("/artists", userKey,
@@ -157,6 +202,12 @@ class AdvancedFeaturesTests {
                 .andExpect(status().isCreated())
                 .andReturn();
         return JsonPath.read(result.getResponse().getContentAsString(), "$.apiKey");
+    }
+
+    private void expectConflict(String path, String apiKey, String body, String reason) throws Exception {
+        mvc.perform(post(path).header("X-API-Key", apiKey).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isConflict())
+                .andExpect(content().string(containsString(reason)));
     }
 
     private long createAndGetId(String path, String apiKey, String body) throws Exception {

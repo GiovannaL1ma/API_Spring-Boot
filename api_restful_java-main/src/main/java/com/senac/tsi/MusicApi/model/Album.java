@@ -41,11 +41,11 @@ public class Album {
     @ManyToMany
     @JoinTable(name = "album_artist", joinColumns = @JoinColumn(name = "album_id"),inverseJoinColumns = @JoinColumn(name = "artist_id"))
 
-    private Set<Artist> artists = new HashSet<>();
+    private Set<@NotNull Artist> artists = new HashSet<>(); // @NotNull no item: "artists": [null] vira 400 em vez de 500
     @ManyToMany
     @JoinTable(name = "album_genre", joinColumns = @JoinColumn(name = "album_id"), inverseJoinColumns = @JoinColumn(name = "genre_id"))
 
-    private Set<Genre> genres = new HashSet<>(); //set para nao ter repetidos, mesmo que o front envie 2x o mesmo genero.
+    private Set<@NotNull Genre> genres = new HashSet<>(); //set para nao ter repetidos, mesmo que o front envie 2x o mesmo genero.
     @JsonIgnore // @JsonIgnore: nao aparece no JSON do album
     @OneToMany(mappedBy = "album", cascade = CascadeType.REMOVE) //mappedBy diz que o dono do relacionamento e track.album
     @OrderBy("trackNumber")

@@ -79,7 +79,7 @@ public class CoverController {
             content = @Content(examples = @ExampleObject(value = "Could not find album with ID: 99")))
     @ApiResponse(responseCode = "409", description = "The album already has a cover - cada album so pode ter uma capa (One-to-One); " +
             "para trocar a capa use PUT /covers/{id} na capa existente",
-            content = @Content(examples = @ExampleObject(value = "Operation conflicts with existing data: a value that must be unique is already in use")))
+            content = @Content(examples = @ExampleObject(value = "This album already has a cover: update or delete it instead of creating another")))
     @RequiresApiKey
     @PostMapping("/covers")
     public ResponseEntity<EntityModel<Cover>> newCover(
@@ -109,7 +109,7 @@ public class CoverController {
                     @ExampleObject(name = "Capa", value = "Could not find cover with ID: 99"),
                     @ExampleObject(name = "Album", value = "Could not find album with ID: 99")}))
     @ApiResponse(responseCode = "409", description = "The album already has another cover - o album informado ja tem outra capa (cada album so pode ter uma)",
-            content = @Content(examples = @ExampleObject(value = "Operation conflicts with existing data: a value that must be unique is already in use")))
+            content = @Content(examples = @ExampleObject(value = "This album already has a cover: update or delete it instead of creating another")))
     @RequiresApiKey
     @PutMapping("/covers/{id}")
     public ResponseEntity<EntityModel<Cover>> updateCover(
