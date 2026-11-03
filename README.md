@@ -70,7 +70,7 @@ docker run -p 8080:8080 -e API_ADMIN_KEY=minha-chave-admin music-catalog-api
 ./mvnw test
 ```
 
-Os testes sobem a API inteira e conferem a chave de API, a idempotência, as duas versões das faixas, o CORS e o limite de requisições.
+Os testes sobem a API inteira e conferem a chave de API, a idempotência (inclusive que repetir o `POST /api-keys` não devolve a chave de novo), as duas versões das faixas, o CORS, o limite de requisições, o 400 para listas com `null` e o motivo de cada 409.
 
 ### Coleção do Postman
 
