@@ -9,8 +9,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import tools.jackson.databind.json.JsonMapper;
+
+import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -24,6 +28,9 @@ class AdvancedFeaturesTests {
 
     @Autowired
     private MockMvc mvc;
+
+    @Autowired
+    private JsonMapper jsonMapper;
 
     @Test
     void readingIsPublicAndReportsRateLimit() throws Exception {
@@ -196,6 +203,20 @@ class AdvancedFeaturesTests {
                 .andExpect(jsonPath("$.tags[6].name").value("Tracks"))
                 .andExpect(jsonPath("$.tags[7].name").value("Covers"))
                 .andExpect(jsonPath("$.info.description").value(containsString("Primeiros passos")));
+    }
+
+    @Test
+    void rootListsLinksInRegistrationOrderInTheApiAndInSwagger() throws Exception {
+        // mesma ordem dos grupos do Swagger: chave, gravadora, artista, genero, album, faixas, capa; depois a documentacao
+        List<String> expected = List.of("self", "api-keys", "labels", "artists", "genres", "albums", "tracks", "covers",
+                "docs", "openapi-v1", "openapi-v2", "terms-of-service", "license");
+
+        String root = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertEquals(expected, List.copyOf(jsonMapper.readTree(root).at("/_links").propertyNames()));
+
+        String docs = mvc.perform(get("/v3/api-docs/v1")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        assertEquals(expected, List.copyOf(jsonMapper.readTree(docs)
+                .at("/paths/~1/get/responses/200/content/application~1hal+json/example/_links").propertyNames()));
     }
 
     @Test
