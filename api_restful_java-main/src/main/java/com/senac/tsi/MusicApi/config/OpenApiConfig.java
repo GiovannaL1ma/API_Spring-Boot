@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.lang.reflect.Method;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +51,11 @@ public class OpenApiConfig {
     // versao do produto: aparece no Swagger e na raiz (/); tem que bater com o <version> do pom.xml
     // MAJOR muda quando quebra quem ja usa a API, MINOR quando acrescenta algo, PATCH quando so corrige
     public static final String VERSION = "2.1.1";
+
+    // ordem dos grupos no Swagger: a chave primeiro, depois a raiz e cada cadastro antes de quem depende dele
+    // (gravadora -> artista -> genero -> album -> faixas e capa). Os nomes tem que bater com o @Tag dos controllers
+    static final List<String> TAG_ORDER = List.of("API Keys", "Home", "Record Labels", "Artists", "Genres",
+            "Albums", "Tracks", "Covers");
 
     private static final String TITLE = "Music Catalog API";
     private static final String SECURITY_SCHEME = "ApiKey";
@@ -89,16 +95,37 @@ public class OpenApiConfig {
     private String description() {
         ApiProperties.RateLimit limits = properties.rateLimit();
         return "API RESTful para gerenciar um catalogo de discos: artistas, albuns, faixas, capas, generos e gravadoras, " +
-                "com albuns colaborativos e participacoes especiais (feat.). Todas as listagens sao paginadas (page, size, sort) " +
-                "e as respostas seguem HATEOAS (HAL).\n\n" +
-                "**Versoes (header `X-API-Version`):** escolha a versao no seletor \"Select a definition\", no topo. " +
-                "Sem o header a API responde a versao 1. Na versao 2 as consultas de faixas trazem a duracao formatada (\"3:32\").\n\n" +
-                "**Chave de API (header `X-API-Key`):** ler e livre; criar, alterar e excluir exige chave. Gere a sua em POST /api-keys " +
-                "e cole no botao **Authorize**. Mandar uma chave invalida responde 401 em qualquer endpoint.\n\n" +
+                "com albuns colaborativos e participacoes especiais (feat.). Todas as listagens sao paginadas (`page`, `size`, `sort`).\n\n" +
+                "**Primeiros passos:** os grupos abaixo estao na ordem de uso. Ler (GET) e livre; para cadastrar, siga a tabela, " +
+                "porque cada registro usa o `id` do anterior.\n\n" +
+                "| Passo | Grupo | O que fazer | Precisa de |\n" +
+                "|---|---|---|---|\n" +
+                "| 1 | API Keys | Gerar a sua chave no `POST /api-keys` e copiar o campo `apiKey` (ele so aparece nessa resposta) | Nada, e publico |\n" +
+                "| 2 | - | Clicar em **Authorize**, no topo, e colar a chave | A chave do passo 1 |\n" +
+                "| 3 | Home | Abrir o `GET /`, que lista tudo o que a API tem | Nada |\n" +
+                "| 4 | Record Labels | Cadastrar a gravadora no `POST /labels` | Chave |\n" +
+                "| 5 | Artists | Cadastrar o artista no `POST /artists` | Chave |\n" +
+                "| 6 | Genres | Cadastrar o genero no `POST /genres` | Chave |\n" +
+                "| 7 | Albums | Cadastrar o album no `POST /albums` | Chave + `id` do artista (obrigatorio), da gravadora e dos generos (opcionais) |\n" +
+                "| 8 | Tracks | Cadastrar as faixas no `POST /tracks` | Chave + `id` do album (e dos convidados, se tiver feat.) |\n" +
+                "| 9 | Covers | Cadastrar a capa no `POST /covers` | Chave + `id` do album (uma capa por album) |\n\n" +
+                "**Chave de API e planos (header `X-API-Key`):** o plano e escolhido pela chave enviada. " +
+                "Uma chave invalida responde `401` em qualquer endpoint e conta no limite de visitante.\n\n" +
+                "| Plano | Como acessar | O que pode | Limite por minuto | Contado por |\n" +
+                "|---|---|---|---|---|\n" +
+                "| Visitante | Sem chave | Ler os dados (GET) e gerar uma chave | " + limits.anonymousPerMinute() + " | IP |\n" +
+                "| USER | Chave gerada no `POST /api-keys` | Ler, criar, alterar e excluir dados; ver ou apagar a propria chave em `/api-keys/me` | " +
+                limits.withKeyPerMinute() + " | Chave |\n" +
+                "| ADMIN | Chave da variavel `API_ADMIN_KEY` (sem ela, a API gera uma e mostra no log ao subir) | " +
+                "Tudo do USER e gerenciar todas as chaves em `/api-keys` | " + limits.withKeyPerMinute() + " | Chave |\n\n" +
+                "Passou do limite, a resposta e `429` e o header `Retry-After` diz em quantos segundos tentar de novo. " +
+                "Toda resposta traz `X-RateLimit-Limit`, `X-RateLimit-Remaining` e `X-RateLimit-Reset`.\n\n" +
+                "**HATEOAS (HAL):** cada resposta traz um bloco `_links` com o que da para fazer em seguida " +
+                "(ver, alterar, excluir, ir para os registros ligados ou para a proxima pagina).\n\n" +
                 "**Idempotencia (header `X-Idempotency-Key`):** nos POST, repetir a mesma chave devolve a resposta da primeira vez " +
                 "em vez de criar outro registro.\n\n" +
-                "**Limite de requisicoes:** " + limits.anonymousPerMinute() + " por minuto sem chave e " + limits.withKeyPerMinute() +
-                " com chave; passou disso, a resposta e 429 com o header Retry-After.";
+                "**Versoes (header `X-API-Version`):** escolha a versao no seletor \"Select a definition\", no topo. " +
+                "Sem o header a API responde a versao 1. Na versao 2 as consultas de faixas trazem a duracao formatada (\"3:32\").";
     }
 
     // um grupo por versao: o seletor do Swagger troca entre eles ("Music Catalog API v1" e "v2") e cada um ja manda o X-API-Version certo
@@ -131,7 +158,20 @@ public class OpenApiConfig {
                             .schema(new StringSchema()._default(version)._enum(List.of(version))));
                     return operation;
                 })
+                // o Swagger mostra os grupos na ordem da lista tags, entao ordena ela pelo TAG_ORDER
+                .addOpenApiCustomizer(openApi -> {
+                    if (openApi.getTags() != null)
+                        openApi.setTags(openApi.getTags().stream()
+                                .sorted(Comparator.comparingInt(tag -> tagPosition(tag.getName())))
+                                .toList());
+                })
                 .build();
+    }
+
+    // grupo fora do TAG_ORDER vai para o fim, em vez de passar na frente da chave
+    private static int tagPosition(String name) {
+        int position = TAG_ORDER.indexOf(name);
+        return position < 0 ? TAG_ORDER.size() : position;
     }
 
     // endpoint sem version no mapping responde a todas as versoes, entao aparece em todos os grupos

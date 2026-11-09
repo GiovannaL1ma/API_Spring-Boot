@@ -183,6 +183,22 @@ class AdvancedFeaturesTests {
     }
 
     @Test
+    void swaggerListsGroupsInRegistrationOrder() throws Exception {
+        // a chave primeiro, depois a raiz e cada cadastro antes de quem depende dele
+        mvc.perform(get("/v3/api-docs/v1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tags[0].name").value("API Keys"))
+                .andExpect(jsonPath("$.tags[1].name").value("Home"))
+                .andExpect(jsonPath("$.tags[2].name").value("Record Labels"))
+                .andExpect(jsonPath("$.tags[3].name").value("Artists"))
+                .andExpect(jsonPath("$.tags[4].name").value("Genres"))
+                .andExpect(jsonPath("$.tags[5].name").value("Albums"))
+                .andExpect(jsonPath("$.tags[6].name").value("Tracks"))
+                .andExpect(jsonPath("$.tags[7].name").value("Covers"))
+                .andExpect(jsonPath("$.info.description").value(containsString("Primeiros passos")));
+    }
+
+    @Test
     void startsWithSampleData() throws Exception {
         mvc.perform(get("/artists/search").param("name", "AJULLIACOSTA"))
                 .andExpect(jsonPath("$.page.totalElements").value(1));
