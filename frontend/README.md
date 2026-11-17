@@ -16,6 +16,19 @@ Por padrão chama a API em `http://localhost:8080`. Para usar outra, crie um `.e
 VITE_API_URL=https://api-spring-boot-emzp.onrender.com
 ```
 
+## Erros em português
+
+A API responde os erros em inglês. O front traduz cada mensagem (e o nome de cada campo) em [`src/lib/errors.ts`](src/lib/errors.ts), mostra no aviso e marca o campo errado no formulário. Mensagem que o front não conhece cai num texto genérico pelo status, nunca em inglês.
+
+## Testes
+
+```bash
+npm test            # tradução de cada erro e o cliente da API (sem precisar da API)
+npm run test:api    # provoca cada erro na API de verdade (precisa dela rodando em localhost:8080)
+```
+
+O `test:api` acusa se o back mudar o texto de algum erro e o front deixar de traduzir. Para testar contra outra API, crie um `.env.api` com `VITE_API_URL=...`.
+
 ## Deploy no Render (Static Site)
 
 1. **New → Static Site**, mesmo repositório.

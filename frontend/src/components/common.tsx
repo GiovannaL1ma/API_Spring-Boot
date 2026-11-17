@@ -12,19 +12,34 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ApiError, type Page } from "@/lib/api"
+import { ApiError, getApiKey, setApiKey, type Page } from "@/lib/api"
+import { fieldLabel } from "@/lib/errors"
 import { useApiKey } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 
 export function showError(e: unknown) {
-  if (e instanceof ApiError) {
-    const fields = e.errors ? Object.entries(e.errors).map(([k, v]) => `${k}: ${v}`) : []
-    toast.error(e.status ? `Erro ${e.status}` : "Sem conexão", {
-      description: fields.length ? fields.join(" · ") : e.message,
-    })
-  } else {
-    toast.error("Algo deu errado", { description: String(e) })
+  if (!(e instanceof ApiError)) {
+    console.error(e)
+    toast.error("Algo deu errado", { description: "Erro inesperado no site. Recarregue a página e tente de novo." })
+    return
   }
+  const fields = Object.entries(e.errors).map(([k, v]) => `${fieldLabel(k)} ${v}`)
+  toast.error(e.title, {
+    description: fields.length ? (
+      <ul className="list-disc pl-4">
+        {fields.map((f) => (
+          <li key={f}>{f}</li>
+        ))}
+      </ul>
+    ) : (
+      e.message
+    ),
+    // chave recusada (ex.: a API reiniciou no Render e apagou as chaves): deixa trocar na hora
+    action:
+      e.status === 401 && getApiKey()
+        ? { label: "Esquecer chave", onClick: () => setApiKey("") }
+        : undefined,
+  })
 }
 
 export function PageHeader({ title, count, children }: { title: string; count?: number; children?: ReactNode }) {

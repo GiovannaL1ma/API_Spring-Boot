@@ -41,7 +41,12 @@ async function submit<T>(setErrors: (e: Errors) => void, fn: () => Promise<T>) {
   }
 }
 
-const num = (v: string) => (v.trim() === "" ? null : Number(v))
+// campo numerico: vazio vira null; texto que nao e numero vai como esta, e a API responde qual campo esta errado
+const num = (v: string) => {
+  const t = v.trim()
+  if (t === "") return null
+  return /^-?\d+$/.test(t) ? Number(t) : t
+}
 
 function TypeSelect<K extends string>({
   value,
@@ -343,8 +348,9 @@ export function TrackForm({
         submit(setErrors, async () => {
           const seconds = parseDuration(duration)
           if (duration.trim() && seconds === null) {
-            setErrors({ durationSeconds: "use m:ss, ex.: 3:25" })
-            throw new ApiError(400, "Duração em formato m:ss, ex.: 3:25")
+            throw ApiError.local("A duração precisa estar no formato m:ss, ex.: 3:25.", {
+              durationSeconds: "use o formato m:ss, ex.: 3:25",
+            })
           }
           const body = {
             title,

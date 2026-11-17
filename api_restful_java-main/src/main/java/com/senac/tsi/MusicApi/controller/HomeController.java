@@ -11,7 +11,9 @@ import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
+import org.springframework.hateoas.Link;
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,6 +23,13 @@ import java.util.List;
 @RestController
 @Tag(name = "Home", description = "Ponto de entrada da API, com links para todas as colecoes")
 public class HomeController {
+
+    // site (front) que consome a API; muda pela variavel de ambiente API_FRONTEND_URL
+    private final String frontendUrl;
+
+    public HomeController(@Value("${api.frontend-url}") String frontendUrl) {
+        this.frontendUrl = frontendUrl;
+    }
 
     // exemplo que aparece no Swagger: os links na mesma ordem da resposta de verdade
     private static final String ROOT_EXAMPLE = """
@@ -34,6 +43,7 @@ public class HomeController {
                 "albums": { "href": "http://localhost:8080/albums" },
                 "tracks": { "href": "http://localhost:8080/tracks" },
                 "covers": { "href": "http://localhost:8080/covers" },
+                "frontend": { "href": "https://discoteca-8hm2.onrender.com" },
                 "docs": { "href": "http://localhost:8080/swagger-ui.html" },
                 "openapi-v1": { "href": "http://localhost:8080/v3/api-docs/v1" },
                 "openapi-v2": { "href": "http://localhost:8080/v3/api-docs/v2" },
@@ -65,6 +75,9 @@ public class HomeController {
         model.add(linkTo(methodOn(AlbumController.class).getAllAlbums(Pageable.unpaged())).withRel("albums"));
         model.add(linkTo(methodOn(TrackController.class).getAllTracks(Pageable.unpaged())).withRel("tracks"));
         model.add(linkTo(methodOn(CoverController.class).getAllCovers(Pageable.unpaged())).withRel("covers"));
+
+        // Front da API (site para navegar no catalogo)
+        model.add(Link.of(frontendUrl, "frontend"));
 
         // Documentacao: Swagger UI e o JSON do OpenAPI de cada versao
         model.add(linkTo(HomeController.class).slash("swagger-ui.html").withRel("docs"));

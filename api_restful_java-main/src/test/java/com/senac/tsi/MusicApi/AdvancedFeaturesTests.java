@@ -207,9 +207,9 @@ class AdvancedFeaturesTests {
 
     @Test
     void rootListsLinksInRegistrationOrderInTheApiAndInSwagger() throws Exception {
-        // mesma ordem dos grupos do Swagger: chave, gravadora, artista, genero, album, faixas, capa; depois a documentacao
+        // mesma ordem dos grupos do Swagger: chave, gravadora, artista, genero, album, faixas, capa; depois o front e a documentacao
         List<String> expected = List.of("self", "api-keys", "labels", "artists", "genres", "albums", "tracks", "covers",
-                "docs", "openapi-v1", "openapi-v2", "terms-of-service", "license");
+                "frontend", "docs", "openapi-v1", "openapi-v2", "terms-of-service", "license");
 
         String root = mvc.perform(get("/")).andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
         assertEquals(expected, List.copyOf(jsonMapper.readTree(root).at("/_links").propertyNames()));

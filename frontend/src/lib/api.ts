@@ -1,4 +1,6 @@
-export const API_URL = (import.meta.env.VITE_API_URL ?? "http://localhost:8080").replace(/\/$/, "")
+import { translateError } from "./errors"
+
+export const API_URL =(import.meta.env.VITE_API_URL ?? "http://localhost:8080").replace(/\/$/, "")
 
 const KEY_STORAGE = "music-catalog:api-key"
 
@@ -20,15 +22,30 @@ export function setApiKey(key: string) {
   window.dispatchEvent(new Event("api-key-change"))
 }
 
-// erro no formato Problem Details (RFC 9457) que a API devolve
+// erro da API (Problem Details, RFC 9457) ja traduzido para portugues
+// message/title/errors: o que mostrar na tela | detail: o texto original da API, em ingles
 export class ApiError extends Error {
   status: number
-  errors?: Record<string, string>
+  title: string
+  errors: Record<string, string>
+  detail?: string
 
-  constructor(status: number, detail: string, errors?: Record<string, string>) {
-    super(detail)
+  constructor(status: number, detail?: string | null, errors?: Record<string, string> | null) {
+    const friendly = translateError(status, detail, errors)
+    super(friendly.message)
+    this.name = "ApiError"
     this.status = status
-    this.errors = errors
+    this.title = friendly.title
+    this.errors = friendly.fields
+    this.detail = detail ?? undefined
+  }
+
+  // erro detectado no proprio front, antes de chamar a API (mensagens ja em portugues)
+  static local(message: string, errors: Record<string, string> = {}) {
+    const e = new ApiError(400)
+    e.message = message
+    e.errors = errors
+    return e
   }
 }
 
@@ -55,7 +72,8 @@ export async function api<T>(path: string, { method = "GET", body, version }: Op
       body: body === undefined ? undefined : JSON.stringify(body),
     })
   } catch {
-    throw new ApiError(0, `Não deu pra falar com a API em ${API_URL}. Ela está rodando?`)
+    // sem resposta: API fora do ar, ligando no Render, sem internet ou bloqueio de CORS
+    throw new ApiError(0)
   }
 
   const remaining = res.headers.get("X-RateLimit-Remaining")
@@ -67,10 +85,17 @@ export async function api<T>(path: string, { method = "GET", body, version }: Op
   if (res.status === 204) return undefined as T
 
   const text = await res.text()
-  const data = text ? JSON.parse(text) : undefined
+  let data: unknown
+  try {
+    data = text ? JSON.parse(text) : undefined
+  } catch {
+    // ex.: pagina HTML de erro do Render (502) enquanto a API liga
+    data = undefined
+  }
 
   if (!res.ok) {
-    throw new ApiError(res.status, data?.detail ?? `Erro ${res.status}`, data?.errors)
+    const problem = data as { detail?: string; errors?: Record<string, string> } | undefined
+    throw new ApiError(res.status, problem?.detail, problem?.errors)
   }
   return data as T
 }
